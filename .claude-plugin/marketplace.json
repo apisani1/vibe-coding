@@ -1,0 +1,14 @@
+{
+  "name": "apisani1-vibe-coding",
+  "owner": {
+    "name": "Antonio Pisani",
+    "url": "https://github.com/apisani1"
+  },
+  "plugins": [
+    {
+      "name": "vibe-coding",
+      "source": "./",
+      "description": "Full-lifecycle AI-agent software building (spec → design → plan → build → verify → review)."
+    }
+  ]
+}

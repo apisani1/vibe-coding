@@ -8,7 +8,9 @@ Common to all modes:
 
 - Ground in repo truth first; ask the user only what the workspace cannot answer.
 - Probe sub-agents once per run (`scripts/probe_subagents.py --repo <target>`); record
-  the result in `summary.md`. Dispatch when present, fall back inline when absent.
+  the result in `summary.md`. Dispatch when present, fall back inline when absent —
+  always dispatch using the probe's `invoke_name` (bare or plugin-namespaced), never a
+  hardcoded name.
 - Run-dir modes (`env`, `define`, `design`, `plan`, `verify`, `review`): create the dir
   via `scripts/new_run_dir.py --repo <target> --mode <mode>`, write the mode artifacts
   plus `summary.md` and `state.json`, and end with a terse summary naming the next mode

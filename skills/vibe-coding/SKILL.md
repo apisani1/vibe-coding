@@ -156,8 +156,11 @@ specialists.
 1. At the start of every run, call `scripts/probe_subagents.py` and record availability
    in `summary.md` under "Sub-agents used".
 2. For each mode with an owning sub-agent (table above): present → dispatch via the Task
-   tool and skip the inline checks for that category; absent → run the inline fallback
-   checklist in `references/modes.md`.
+   tool using the **`invoke_name`** the probe reports (bare name for user/project
+   installs; `vibe-coding:<agent>` when installed as a plugin — never hardcode the bare
+   name), and skip the inline checks for that category; absent → run the inline fallback
+   checklist in `references/modes.md`. The same `invoke_name` rule applies to
+   `vibe-overseer` under `--auto`.
 3. Invocation contract (pass in the agent message): `repo_path`, `run_dir`,
    `artifact_paths`, `scope_glob` (default `**/*`), `task`.
 4. Each sub-agent returns a fenced ```json block **first** (contract in
@@ -264,6 +267,7 @@ Or trust the exit code (0 clean, 1 blockers, 2 config error).
 - "Why does the login test flake?" → `ask` (research only, no artifacts)
 - "Set up CLAUDE.md for this repo" → `env`
 - Slash: `/vibe define`, `/vibe plan ~/code/myproj`, `/vibe review --ci --json`
+  (when installed as a plugin the command is namespaced: `/vibe-coding:vibe …`)
 
 ## Tone & non-goals
 

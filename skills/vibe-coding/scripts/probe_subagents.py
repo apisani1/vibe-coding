@@ -21,13 +21,20 @@ Model requests come from <repo>/.claude/vibe-coding.local.md YAML frontmatter:
 Parsing is stdlib-only and deliberately minimal (two-level "key: value" lines);
 a missing or malformed file degrades to no model requests.
 
+Each agent also carries an "invoke_name": the string the orchestrator must pass to
+the Task tool as `subagent_type`. Claude Code registers a user/project agent by its
+bare name (`vibe-architect`) but a *plugin*-installed agent by a namespaced name
+(`vibe-coding:vibe-architect`). We detect the plugin case by the presence of a
+`.claude-plugin/plugin.json` next to the skill-adjacent `agents/` dir and prefix with
+its `name`. This keeps one codebase working under both manual and plugin installs.
+
 Emits a JSON object to stdout:
   {
     "config": {"path": "/abs/.claude/vibe-coding.local.md" | null,
                "auto_max_checkpoints": 10},
     "agents": {
       "vibe-architect": {"present": true, "path": "...", "scope": "project",
-                          "model": "opus"},
+                          "model": "opus", "invoke_name": "vibe-architect"},
       ...
     }
   }
@@ -54,7 +61,39 @@ SPECIALISTS = [
 DEFAULT_AUTO_MAX_CHECKPOINTS = 10
 
 # skills/vibe-coding/scripts/ -> repo/plugin root two levels above the skill dir
-SKILL_ADJACENT_AGENTS = Path(__file__).resolve().parent.parent.parent.parent / "agents"
+SKILL_ADJACENT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+SKILL_ADJACENT_AGENTS = SKILL_ADJACENT_ROOT / "agents"
+
+
+def plugin_namespace() -> str | None:
+    """Return the plugin name if the skill ships inside a Claude Code plugin.
+
+    A plugin carries `.claude-plugin/plugin.json` at its root — the same root the
+    skill-adjacent `agents/` dir lives under. When present, plugin agents are
+    registered namespaced (`<plugin-name>:<agent>`), so dispatch must use that form.
+    Missing or malformed manifest -> None (treat as a plain skill install).
+    """
+    manifest = SKILL_ADJACENT_ROOT / ".claude-plugin" / "plugin.json"
+    if not manifest.exists():
+        return None
+    try:
+        name = json.loads(manifest.read_text()).get("name")
+    except (OSError, ValueError):
+        return None
+    return name if isinstance(name, str) and name else None
+
+
+def invoke_name_for(name: str, scope: str | None, namespace: str | None) -> str | None:
+    """The subagent_type the orchestrator passes to the Task tool.
+
+    user/project agents register bare; skill-adjacent agents register namespaced when
+    a plugin manifest is present, bare otherwise (dev tree / plain skill install).
+    """
+    if scope is None:
+        return None
+    if scope == "skill-adjacent" and namespace:
+        return f"{namespace}:{name}"
+    return name
 
 
 def find(name: str, repo: Path) -> tuple[bool, str | None, str | None]:
@@ -118,6 +157,7 @@ def main() -> int:
     repo = Path(args.repo).resolve()
 
     cfg_path, models, cap = read_local_config(repo)
+    namespace = plugin_namespace()
 
     agents: dict[str, dict] = {}
     for name in SPECIALISTS:
@@ -127,6 +167,7 @@ def main() -> int:
             "path": path,
             "scope": scope,
             "model": models.get(name),
+            "invoke_name": invoke_name_for(name, scope, namespace),
         }
 
     json.dump(

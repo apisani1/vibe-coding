@@ -123,6 +123,14 @@ read.
 
 ## Sub-agent invocation & return contract
 
+**Probe output** (`probe_subagents.py`). Each specialist entry carries
+`present`, `path`, `scope` (`project` | `user` | `skill-adjacent` | `null`), `model`,
+and **`invoke_name`** — the string the orchestrator MUST pass as the Task tool's
+`subagent_type`. It is the bare name for `project`/`user` installs and the namespaced
+`<plugin-name>:<agent>` when the skill ships inside a plugin (detected via
+`.claude-plugin/plugin.json` beside the skill-adjacent `agents/` dir); `null` when the
+agent is absent. Never hardcode a bare name for dispatch — always use `invoke_name`.
+
 **Invocation** (in the Task-tool message to the agent):
 
 ```

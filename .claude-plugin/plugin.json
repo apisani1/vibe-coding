@@ -1,0 +1,20 @@
+{
+  "name": "vibe-coding",
+  "version": "0.1.0",
+  "description": "Full-lifecycle AI-agent software building: research, spec, design, plan, checkpointed build (incl. autopilot), verify, and review.",
+  "author": {
+    "name": "Antonio Pisani",
+    "email": "antonio.pisani@gmail.com",
+    "url": "https://github.com/apisani1"
+  },
+  "repository": "https://github.com/apisani1/vibe-coding",
+  "license": "MIT",
+  "keywords": [
+    "vibe-coding",
+    "code-generation",
+    "spec-driven",
+    "code-review",
+    "agentic",
+    "workflow"
+  ]
+}
