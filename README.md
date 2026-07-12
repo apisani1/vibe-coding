@@ -8,6 +8,8 @@ It ships as one skill (`vibe-coding`), a `/vibe` slash command, and five read-on
 specialist sub-agents (`vibe-architect`, `vibe-test-designer`, `vibe-code-reviewer`,
 `vibe-security-auditor`, `vibe-overseer`) that the skill dispatches when installed.
 
+![vibe-coding workflow: ask and env feed into the define → design → plan → approval → build → verify → review pipeline, with read-only specialist sub-agents](vibe-coding.png)
+
 ## Pipeline
 
 ```
@@ -68,11 +70,25 @@ inline fallback. With a manual install the command is the bare `/vibe <mode>`.
 /vibe verify              # run the verification plan, write verify-report.md
 /vibe review --ci --json  # headless review: findings.json to stdout, CI exit codes
 /vibe ask "why …?"        # read-only investigation, writes nothing
+/vibe env                 # persist this repo's build/test/lint commands into CLAUDE.md
 ```
 
 Per-agent model overrides can be set in the target repo's
 `.claude/vibe-coding.local.md` (YAML frontmatter `models:` map plus
 `auto_max_checkpoints`).
+
+## Acknowledgments
+
+This project was inspired by:
+
+- **Islem Maboud's** [Agentic Engineering Skills](https://github.com/ipenywis/skills) for
+  building better and faster with coding agents, inspired by the workflow Andrej Karpathy
+  uses to build quality software faster and more reliably with AI agents.
+- **Forrest Chang's** [LLM behavioral skill](https://github.com/multica-ai/andrej-karpathy-skills),
+  inspired by Andrej Karpathy's Claude Code programming guidelines.
+- **Arjan Egges's** [7-step Software Design Guide](https://www.arjancodes.com/designguide/).
+
+We thank the original authors for their contributions and ideas.
 
 ## License
 
