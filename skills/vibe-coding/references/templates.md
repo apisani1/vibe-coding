@@ -19,6 +19,7 @@ is a smell — push the interview harder).
 - [env-report.md](#env-reportmd) (`env`)
 - [CLAUDE.md template](#claudemd-template) (`env`)
 - [summary.md](#summarymd) (all run-dir modes)
+- [preferences.md](#preferencesmd) (user profile — bare greenfield)
 
 ---
 
@@ -336,4 +337,33 @@ human) reads first.
 - Artifacts: <list>
 - Findings: <counts by severity, verify/review only>
 - Next: <next pipeline mode + its approval boundary>
+```
+
+## preferences.md
+
+The user profile's `preferences.md` (lives at `~/.claude/vibe-coding/profile/`, consulted
+for bare greenfield only). Frontmatter carries tool choices; the body is code-style
+philosophy. A complete, ready-to-copy example — with an `assets/` folder — ships at
+`assets/profile-example/`.
+
+```markdown
+---
+package_manager: uv
+python_version: "3.12"
+formatter: black
+line_length: 119
+import_sorter: isort
+linter: [flake8, pylint]
+type_checker: mypy
+test_framework: pytest
+src_layout: true
+license: MIT
+editor: vscode
+precommit: true
+---
+
+# Style philosophy
+
+<Short, principled prose the agent applies with judgment — e.g. functions over classes,
+separate construction from use, explicit types on public functions, tests pin behavior.>
 ```

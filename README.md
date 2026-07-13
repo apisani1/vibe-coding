@@ -77,6 +77,29 @@ Per-agent model overrides can be set in the target repo's
 `.claude/vibe-coding.local.md` (YAML frontmatter `models:` map plus
 `auto_max_checkpoints`).
 
+### Preference profile (bare greenfield)
+
+When you start a **bare** greenfield project (an empty directory), there are no repo
+conventions for the skill to detect, so it consults a **user-scoped preference profile** —
+set up once, never copied per repo:
+
+```
+~/.claude/vibe-coding/profile/
+├── preferences.md   # frontmatter (uv, black/119, isort, pytest, mypy, …) + style prose
+└── assets/          # .vscode/settings.json, .editorconfig, .gitignore, … copied verbatim
+```
+
+Bootstrap it by copying the shipped example:
+
+```
+cp -r skills/vibe-coding/assets/profile-example ~/.claude/vibe-coding/profile
+```
+
+The profile seeds a new repo two ways, both approval-gated and **add-only** (never
+overwrites your files): automatically as `build`'s first checkpoint, or on demand via
+`/vibe env`. `pyproject.toml` is synthesized from your preferences. Scaffolded and
+existing repos ignore the profile — they already carry their own conventions.
+
 ## Acknowledgments
 
 This project was inspired by:

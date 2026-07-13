@@ -60,7 +60,8 @@ this skill.
 that is still greenfield. Classify:
 
 - **Bare greenfield** — no `.git`, no source tree. Interview leads; repo grounding is
-  minimal.
+  minimal. There are no repo conventions to detect, so consult the **user preference
+  profile** (`scripts/read_profile.py`, see below) for the baseline tooling and style.
 - **Scaffolded greenfield** — repo markers exist but `src/` (or equivalent) holds only
   scaffolder placeholders: an `__init__.py` with just a version/docstring, a
   hello-world `main.py`/entry point, smoke tests that only import the package. No
@@ -118,7 +119,8 @@ Mention this in user-facing help when relevant.
 Use `scripts/new_run_dir.py --repo <target> --mode <mode>` to create the run directory
 and update the pointer atomically (it refuses `ask` and `build`). Use
 `scripts/probe_subagents.py --repo <target>` to check which specialist sub-agents are
-installed.
+installed. Use `scripts/read_profile.py` to read the user's preference profile (see
+§ User preference profile) — for bare-greenfield work only.
 
 ## Approval boundaries (safety-critical)
 
@@ -176,6 +178,40 @@ Apply the requested model in the dispatch where the harness supports a model ove
 where it doesn't, record the request in `summary.md` and tell the user to set the
 agent file's `model:` frontmatter instead — never edit agent files silently. Agent
 files ship with `model: inherit`, so the session model is the default everywhere.
+
+## User preference profile
+
+Bare-greenfield repos have no conventions on disk to detect, so the skill consults a
+**user-scoped** preference profile — one place, never copied per repo. Default location
+`~/.claude/vibe-coding/profile/`:
+
+- `preferences.md` — YAML frontmatter (tool choices: `package_manager`, `formatter`,
+  `line_length`, `linter`, `type_checker`, `test_framework`, `src_layout`, `license`, …)
+  plus a prose body of code-style philosophy the agent applies with judgment.
+- `assets/` — literal files (`.vscode/settings.json`, `.editorconfig`, `.gitignore`,
+  `.pre-commit-config.yaml`, …) copied **verbatim** — never re-emitted or paraphrased.
+
+Read it with `scripts/read_profile.py` (schema in `references/schemas.md`). Behavior:
+
+- **Bare greenfield only.** Scaffolded/existing repos already carry their own conventions;
+  the profile never auto-runs there.
+- **`define`** folds the frontmatter tool choices + style into `spec.md` Constraints;
+  project-specific files (`pyproject.toml`, …) are **synthesized** from those prefs
+  (`references/python-stack.md`), not templated.
+- **Base-and-augment when they overlap.** You may ship a *partial* `pyproject.toml` in
+  `assets/` (just the `[tool.*]` sections) *and* set pyproject-related prefs in
+  frontmatter: the asset is copied as an authoritative **base**, then only the missing
+  spec/pref-derived fields (`[project]` metadata, dependencies) are merged in around your
+  hand-written sections — never overwriting them (`references/schemas.md`).
+- **Two apply paths for the assets** (both write to the repo and are approval-gated):
+  (1) **`build` checkpoint 0** proposes seeding a bare repo from the profile before the
+  first real checkpoint; (2) **`env`** applies it on demand. Both are **add-only** —
+  never overwrite a file the user already created.
+- **Precedence:** repo-local `.claude/vibe-coding.local.md` keys override the profile; the
+  profile overrides generic defaults; no profile → today's generic defaults, unchanged.
+
+A ready-to-copy example ships at `assets/profile-example/` (copy to
+`~/.claude/vibe-coding/profile/` and edit).
 
 ## findings.json
 

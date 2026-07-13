@@ -30,6 +30,13 @@ aren't configured. Don't add new linters to an existing repo uninvited.
 Defaults apply only where detection finds nothing (bare greenfield). For scaffolded
 repos, the generator's config **is** the detected set — honor it.
 
+**Before falling back to the generic table below, check the user preference profile**
+(`scripts/read_profile.py`, see SKILL.md § User preference profile and `schemas.md`). For
+bare greenfield it supplies the user's own defaults — the values that `[tool.*]` detection
+would otherwise find — so synthesize `pyproject.toml` from those (`package_manager`,
+`formatter`/`line_length`, `linter`, `type_checker`, `test_framework`, …). The table below
+is the fallback when no profile exists.
+
 | Concern         | Default                              | Notes                                                        |
 | --------------- | ------------------------------------- | ------------------------------------------------------------ |
 | Package manager | **UV**                                | Check `pyproject.toml` first — older repos may use Poetry; follow the repo. |

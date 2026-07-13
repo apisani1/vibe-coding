@@ -12,6 +12,7 @@ contract with merge rules. All JSON is pretty-printed with 2-space indent.
 - [Sub-agent invocation & return contract](#sub-agent-invocation--return-contract)
 - [Merge rules](#merge-rules)
 - [CI exit codes](#ci-exit-codes)
+- [User preference profile](#user-preference-profile)
 
 ## findings.json
 
@@ -208,3 +209,62 @@ When merging sub-agent findings into the run's `findings.json`:
 ```bash
 jq -e '[.findings[] | select(.severity == "blocker")] | length == 0' findings.json
 ```
+
+## User preference profile
+
+User-scoped defaults for **bare-greenfield** work (no repo conventions to detect). One
+location, never copied per repo. Default `~/.claude/vibe-coding/profile/`:
+
+```
+~/.claude/vibe-coding/profile/
+├── preferences.md      # frontmatter (tool choices) + prose body (style philosophy)
+└── assets/             # literal files, copied VERBATIM into the target repo root
+```
+
+**`preferences.md` frontmatter** — a flat map of scalars and lists. Recognized keys are
+advisory (the agent applies them with judgment); unknown keys are passed through. Common:
+
+| Key | Type | Example |
+| --- | --- | --- |
+| `package_manager` | scalar | `uv` |
+| `python_version` | scalar | `"3.12"` |
+| `formatter` / `line_length` | scalar | `black` / `119` |
+| `import_sorter` | scalar | `isort` |
+| `linter` | scalar or list | `[flake8, pylint]` |
+| `type_checker` | scalar | `mypy` |
+| `test_framework` | scalar | `pytest` |
+| `src_layout` / `precommit` | scalar (bool-ish) | `true` |
+| `license` / `editor` | scalar | `MIT` / `vscode` |
+
+The prose body (after the closing `---`) is free-form code-style philosophy.
+
+**`read_profile.py` output:**
+
+```json
+{
+  "profile_dir": "/abs/path",
+  "present": true,
+  "preferences": { "package_manager": "uv", "line_length": "119", "linter": ["flake8", "pylint"] },
+  "prose": "…style philosophy…",
+  "assets": [".editorconfig", ".gitignore", ".vscode/settings.json"]
+}
+```
+
+`assets` are paths **relative to `assets/`**, mapping directly onto the target repo root.
+Missing profile → `present: false`, empty `preferences`/`assets`; exit 0 always.
+
+**Rules the orchestrator enforces:**
+- **Bare greenfield only.** Never consulted for scaffolded/existing repos.
+- **Assets copied verbatim**, never re-emitted or paraphrased. Project-specific files
+  (`pyproject.toml`, …) are synthesized from the frontmatter prefs (`python-stack.md`).
+- **Base-and-augment for overlap files.** When a synthesizable project file (e.g.
+  `pyproject.toml`) *also* exists in `assets/`, it is an authoritative **base**, not a
+  plain verbatim copy: copy it, then merge in only the **missing** spec/pref-derived
+  fields (`[project]` name/version, dependencies) around it. Never overwrite or reformat
+  a section the user hand-wrote — the frontmatter prefs fill gaps in the base, they do
+  not clobber it. (This is how a partial `pyproject.toml` carrying just `[tool.*]`
+  sections combines with prefs that supply the dynamic `[project]` metadata.)
+- **Add-only.** Never overwrite a file the user already created in the target repo (both
+  apply paths: `build` checkpoint 0 and `env`).
+- **Precedence:** repo-local `.claude/vibe-coding.local.md` keys > profile > generic
+  defaults.

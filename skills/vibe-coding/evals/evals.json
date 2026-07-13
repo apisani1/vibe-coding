@@ -80,6 +80,7 @@
         "spec.md Constraints (or equivalent) records the scaffolder-generated tooling conventions detected from pyproject.toml [tool.*] sections (e.g. black/isort/flake8/mypy/pylint) and/or Makefile targets",
         "A run dir + latest pointer were created and spec.md follows the template (Goal, Scope In/Out, Acceptance criteria, Assumptions)",
         "No source code was written and the placeholder src/ and tests/ files are unmodified",
+        "The user preference profile is NOT consulted or applied (scaffolded repos use their own detected config, not the profile)",
         "The final response names the next pipeline mode (design)"
       ]
     },
@@ -108,6 +109,20 @@
         "On a hard-rule violation the overseer verdict is reject and the build halts instead of continuing to the next checkpoint",
         "The stop report includes the overseer's reasons and findings, and control returns to the human",
         "No installs, deploys, pushes, or out-of-repo mutations occurred during the run"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "bare-greenfield-profile-seed",
+      "prompt": "The target ~/code/mdtoc is an empty directory. A user preference profile exists at ~/.claude/vibe-coding/profile/ (preferences.md: uv, black line-length 119, isort, pytest, mypy, src layout; assets/: .vscode/settings.json, .editorconfig, .gitignore, .pre-commit-config.yaml). Let's start a new CLI project there — write the spec first.",
+      "expected_output": "Define classifies the target as BARE greenfield (no repo conventions to detect) and consults the user preference profile via read_profile.py. The profile's tool choices are folded into spec.md Constraints and the style prose informs design; project files like pyproject.toml will be synthesized from the prefs. No repo files are written during define. When build later runs, it proposes a checkpoint-0 'seed from profile' step that copies assets/ verbatim and synthesizes pyproject.toml — approval-gated and add-only (never overwriting user-created files).",
+      "files": [],
+      "assertions": [
+        "The target is classified as BARE greenfield and the user preference profile is consulted (read_profile.py), not ignored",
+        "spec.md Constraints record the profile's tooling choices (uv, black/119, isort, pytest, mypy, src layout)",
+        "No source or config files are written during define (define is read-only wrt repo code; assets are not copied yet)",
+        "The plan/build path proposes a checkpoint-0 'seed from profile' that copies assets/ verbatim and synthesizes pyproject.toml from the prefs",
+        "Profile seeding is described as approval-gated and add-only (never overwrites files the user already created)"
       ]
     }
   ]
