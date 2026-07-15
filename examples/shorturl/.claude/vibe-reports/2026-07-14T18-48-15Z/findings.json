@@ -1,0 +1,55 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-07-14T18:48:15Z",
+  "subagents_used": ["vibe-test-designer"],
+  "note": "Re-verify after CP8 remediation. AC #10 blocker and AC #8 risk from run 2026-07-14T18-33-33Z are CLOSED. Security audit not re-run: the CP8 diff touched only CLI display (cli._print_codes) + tests — no trust boundary, SQL, auth, or dependency change — so the prior security advisories are carried forward unchanged.",
+  "findings": [
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "tests/test_cli.py",
+      "line": 100,
+      "checkpoint": "6",
+      "message": "AC #11 delete clicks-cascade is transitively covered: test_delete_removes_code_everywhere asserts 404 + gone-from-list but not that click rows were removed. The cascade is pinned at the unit layer (test_db.py::test_delete_cascades_clicks) against the same db.delete_code the CLI calls. Acceptable transitive coverage.",
+      "remediation": "Optional: after `shorturl delete`, assert the code's click count is 0 to re-anchor the cascade at the CLI layer.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "src/shorturl/codes.py",
+      "line": 42,
+      "checkpoint": "4",
+      "message": "Auto-code collision retry / 500-after-exhaustion (R6, api._persist_code) is unexercised. Risk-based-expansion item, not one of the 15 ACs.",
+      "remediation": "Optional: monkeypatch code generation to a fixed value with a pre-seeded collision; assert bounded retry succeeds and exhaustion returns 500.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "dependency",
+      "severity": "advisory",
+      "file": "pyproject.toml",
+      "line": 9,
+      "message": "[carried from 2026-07-14T18-33-33Z] flask/waitress declared with lower-bound floors only ('>=3.0'), no committed lockfile — installs are non-reproducible. Not a live vulnerability.",
+      "remediation": "Add compatible-release upper bounds ('flask>=3.0,<4.0', 'waitress>=3.0,<4.0') and commit uv.lock.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/api.py",
+      "line": 39,
+      "message": "[carried from 2026-07-14T18-33-33Z] No MAX_CONTENT_LENGTH on create_app; POST /api/codes buffers arbitrarily large JSON before validation. API-key gated (authenticated-only resource exhaustion). Defense-in-depth.",
+      "remediation": "Set app.config['MAX_CONTENT_LENGTH'] to a small limit (e.g. 64KB); optionally cap validator string lengths.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/api.py",
+      "line": 131,
+      "message": "[carried from 2026-07-14T18-33-33Z] Referer/User-Agent from the public redirect are stored verbatim and echoed in stats JSON. Safe today (JSON, not HTML); latent stored-XSS only if a future HTML UI renders top_referers unescaped.",
+      "remediation": "Keep serving as JSON (escape at render time if a UI is added); optionally truncate referer/user_agent on insert.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

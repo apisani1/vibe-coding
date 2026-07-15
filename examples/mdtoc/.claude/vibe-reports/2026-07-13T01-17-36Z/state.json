@@ -1,0 +1,12 @@
+{
+  "mode": "env",
+  "created_at": "2026-07-13T01-17-36Z",
+  "target": "/Users/antonio/AI/MyCode/mdtoc",
+  "greenfield": true,
+  "scope": "Set up agent environment (CLAUDE.md) and version control for mdtoc.",
+  "upstream_run": null,
+  "upstream_artifacts": [],
+  "subagents_used": [],
+  "artifacts": ["env-report.md", "summary.md"],
+  "applied": ["CLAUDE.md", ".gitignore", "git init (main) + initial commit bac32ba"]
+}

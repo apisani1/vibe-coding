@@ -1,0 +1,12 @@
+{
+  "mode": "review",
+  "created_at": "2026-07-13T01-10-44Z",
+  "target": "/Users/antonio/AI/MyCode/mdtoc",
+  "greenfield": true,
+  "scope": "mdtoc — CLI injecting/updating a linked Markdown TOC; idempotent, --check, --max-depth. Python/UV/pytest.",
+  "upstream_run": "2026-07-12T23-14-01Z",
+  "upstream_artifacts": ["spec.md", "design.md", "decisions.md", "plan.md"],
+  "subagents_used": ["vibe-code-reviewer", "vibe-security-auditor"],
+  "artifacts": ["review.md", "findings.json", "summary.md"],
+  "verdict": "approve"
+}

@@ -1,0 +1,11 @@
+{
+  "mode": "define",
+  "created_at": "2026-07-12T22-36-21Z",
+  "target": "/Users/antonio/AI/MyCode/mdtoc",
+  "greenfield": true,
+  "scope": "mdtoc — CLI that injects/updates a linked Markdown TOC between <!-- toc --> markers; idempotent, --check, --max-depth. Python/UV/pytest.",
+  "upstream_run": null,
+  "upstream_artifacts": [],
+  "subagents_used": [],
+  "artifacts": ["spec.md", "summary.md"]
+}

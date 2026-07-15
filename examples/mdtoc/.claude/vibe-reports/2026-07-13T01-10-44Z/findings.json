@@ -1,0 +1,18 @@
+{
+  "mode": "review",
+  "scanned_at": "2026-07-13T01-10-44Z",
+  "target": "/Users/antonio/AI/MyCode/mdtoc",
+  "subagents_used": ["vibe-code-reviewer", "vibe-security-auditor"],
+  "findings": [
+    {
+      "category": "correctness",
+      "severity": "advisory",
+      "file": "src/mdtoc/cli.py",
+      "line": 36,
+      "checkpoint": "follow-up",
+      "message": "Temp-file cleanup in _atomic_write is guarded by `except OSError`, so only OSErrors trigger the unlink. A non-OSError BaseException (KeyboardInterrupt during a large write, MemoryError, a signal) bypasses it and orphans the mkstemp temp file '.<name>.XXXXXX.tmp' in the target directory. Not exploitable and not a data-integrity risk — the original file is untouched until os.replace — purely leftover-file hygiene in a local single-user CLI.",
+      "remediation": "Broaden the cleanup to also cover BaseException (unlink then re-raise), or use try/finally that unlinks tmp_name unless os.replace succeeded, keeping the re-raise so the original exception still propagates.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

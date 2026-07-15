@@ -1,0 +1,48 @@
+{
+  "mode": "plan",
+  "created_at": "2026-07-14T17:04:58Z",
+  "target": "/Users/antonio/AI/MyCode/shorturl",
+  "greenfield": true,
+  "scope": "URL shortener service — phased checkpoint plan (3 phases, 7 checkpoints) + verification defined before code, for the MVP in spec.md / design.md",
+  "upstream_run": "2026-07-14T16-55-12Z",
+  "upstream_artifacts": ["design.md", "decisions.md"],
+  "subagents_used": ["vibe-test-designer", "vibe-overseer"],
+  "artifacts": ["plan.md", "checklist.md", "verification-plan.md", "summary.md", "build-log.md"],
+  "build": {
+    "approvals": [
+      "2026-07-14T17:20Z checkpoint-1 — auto-approved by vibe-overseer",
+      "2026-07-14T17:30Z checkpoint-2 — auto-approved by vibe-overseer",
+      "2026-07-14T17:42Z checkpoint-3 — REJECTED by vibe-overseer (isort/CP1 config conflict)",
+      "2026-07-14T17:48Z checkpoint-3 — auto-approved by vibe-overseer on re-review after human-approved config fix; Phase A boundary cleared",
+      "2026-07-14T17:58Z checkpoint-4 — REJECTED then auto-approved on re-review after human authorized the R2 Touches amendment",
+      "2026-07-14T18:06Z checkpoint-5 — auto-approved by vibe-overseer (clean); Phase B boundary cleared",
+      "2026-07-14T18:14Z checkpoint-6 — auto-approved by vibe-overseer (CLI admin)",
+      "2026-07-14T18:24Z checkpoint-7 — auto-approved by vibe-overseer; Phase C boundary cleared; build complete",
+      "2026-07-14T18:44Z checkpoint-8 — auto-approved by vibe-overseer (verify remediation: AC #10 blocker + AC #8 risk); clean",
+      "2026-07-14T18:57Z checkpoint-9 — auto-approved by vibe-overseer (review remediation: API-key non-ASCII → 403)",
+      "2026-07-14T19:00Z checkpoint-10 — auto-approved by vibe-overseer (review remediation: drop types-pyyaml + uv.lock; install human-approved)",
+      "2026-07-14T18:42Z checkpoint-11 — human-approved ('Proceed'): two edge-case bug fixes routed from external Codex review (CRLF URL → 400; delete-race → 404)",
+      "2026-07-14T23:55Z checkpoint-12 — human-approved ('Close it'): require ASCII URLs, closing the high-codepoint redirect-500 residual"
+    ],
+    "completed_checkpoints": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+    "phases_cleared": ["A", "B", "C"],
+    "complete": false,
+    "reopened": "2026-07-14T18:40Z — verify (2026-07-14T18-33-33Z) returned FAIL (AC #10 blocker); routed back to build for CP8 remediation",
+    "auto_grants": [
+      {"granted_at": "2026-07-14T17:12Z", "grant_quote": "/vibe build --auto", "scope": "checkpoints 1-7"},
+      {"granted_at": "2026-07-14T18:40Z", "grant_quote": "/vibe build --auto", "scope": "checkpoint 8 (verify remediation)", "target_note": "latest pointed to verify run; built in place against plan dir 2026-07-14T17-04-58Z"},
+      {"granted_at": "2026-07-14T18:56Z", "grant_quote": "/vibe build .claude/vibe-reports/2026-07-14T17-04-58Z --auto", "scope": "checkpoints 9-10 (review remediation); explicit run-dir path", "install_approval": "human approved uv lock/sync for CP10 dependency hygiene"}
+    ],
+    "last_updated": "2026-07-14T18:40:00Z",
+    "human_interventions": [
+      "Approved uv dependency install for the build",
+      "Approved removing [tool.isort] lines_after_imports=1 in repo pyproject + global profile",
+      "Authorized CP4's R2 assertion amendment to tests/test_redirect.py (added to CP4 Touches)"
+    ],
+    "auto": {
+      "granted_at": "2026-07-14T17:12:00Z",
+      "grant_quote": "/vibe build --auto",
+      "max_checkpoints": 10
+    }
+  }
+}

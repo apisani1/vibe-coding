@@ -1,0 +1,26 @@
+{
+  "mode": "review",
+  "scanned_at": "2026-07-14T23:12:17Z",
+  "subagents_used": ["vibe-code-reviewer", "vibe-security-auditor"],
+  "note": "Focused incremental review of the CP9/CP10 delta since the prior full review (2026-07-14T18-52-16Z). Delta is clean — no new findings. Prior advisories #1 (non-ASCII key 500), #2 (types-pyyaml), #3 (lockfile) are CLOSED; #4 and #5 remain open (deferred by choice). uv.lock scanned: all deps registry-sourced (pypi) + sha256-pinned, no git/path/URL sources.",
+  "findings": [
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/api.py",
+      "line": 39,
+      "message": "[open, deferred] No MAX_CONTENT_LENGTH in create_app; POST /api/codes buffers the full body before validation. API-key gated (authenticated-only resource exhaustion). Unchanged by the delta.",
+      "remediation": "Set app.config['MAX_CONTENT_LENGTH'] to a small cap (e.g. 16*1024) so oversized bodies get 413 before parsing.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/db.py",
+      "line": 164,
+      "message": "[open, deferred] Referer/User-Agent stored verbatim and Referer echoed in stats JSON. No XSS today (JSON, no HTML UI); latent only if a future HTML dashboard renders top_referers unescaped. Unchanged by the delta.",
+      "remediation": "Keep serving as JSON; HTML-escape at render time if a UI is added; optionally length-cap stored headers.",
+      "agent": "vibe-code-reviewer"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "mode": "verify",
+  "created_at": "2026-07-13T00-06-44Z",
+  "target": "/Users/antonio/AI/MyCode/mdtoc",
+  "greenfield": true,
+  "scope": "mdtoc — CLI injecting/updating a linked Markdown TOC; idempotent, --check, --max-depth. Python/UV/pytest.",
+  "upstream_run": "2026-07-12T23-14-01Z",
+  "upstream_artifacts": ["verification-plan.md", "plan.md", "build-log.md"],
+  "subagents_used": ["vibe-test-designer", "vibe-security-auditor"],
+  "artifacts": ["verify-report.md", "findings.json", "summary.md"],
+  "verdict": "pass"
+}

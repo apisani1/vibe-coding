@@ -1,0 +1,11 @@
+{
+  "mode": "design",
+  "created_at": "2026-07-14T16:55:12Z",
+  "target": "/Users/antonio/AI/MyCode/shorturl",
+  "greenfield": true,
+  "scope": "URL shortener service — technical design (data model, modules, framework choices, edge cases) for the MVP defined in spec.md",
+  "upstream_run": "2026-07-14T16-27-26Z",
+  "upstream_artifacts": ["spec.md"],
+  "subagents_used": ["vibe-architect"],
+  "artifacts": ["design.md", "decisions.md", "summary.md"]
+}

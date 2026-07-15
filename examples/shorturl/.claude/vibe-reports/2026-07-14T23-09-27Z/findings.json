@@ -1,0 +1,44 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-07-14T23:09:27Z",
+  "subagents_used": [],
+  "note": "Third verify, after review-remediation CP9 (API-key non-ASCII -> 403) + CP10 (drop types-pyyaml, uv.lock). Sub-agents not re-dispatched: CP9/CP10 were minimal changes already independently reviewed in the review pass (2026-07-14T18-52-16Z), which recommended exactly these fixes. Coverage carried forward (15/15 ACs, +1 test at CP9); security advisories #1/#2/#3 now CLOSED; #4/#5 remain deferred.",
+  "findings": [
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/api.py",
+      "line": 39,
+      "message": "[open, deferred] No Flask MAX_CONTENT_LENGTH; POST /api/codes buffers the full body before validating. API-key gated (authenticated-only resource exhaustion). Defense-in-depth.",
+      "remediation": "Set app.config['MAX_CONTENT_LENGTH'] to a small limit (e.g. 16*1024) in create_app.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/db.py",
+      "line": 164,
+      "message": "[open, deferred] Referer/User-Agent stored verbatim and echoed in stats JSON. No XSS today (JSON, no HTML UI); latent only if a future HTML dashboard renders top_referers unescaped.",
+      "remediation": "Keep serving as JSON; HTML-escape at render time if a UI is added; optionally length-cap stored headers.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "tests/test_cli.py",
+      "line": 100,
+      "message": "[open, deferred] AC #11 delete clicks-cascade covered transitively via db.py unit test against the same db.delete_code the CLI calls. Acceptable.",
+      "remediation": "Optional: after `shorturl delete`, assert the code's click count is 0 at the CLI layer.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "src/shorturl/api.py",
+      "line": 168,
+      "message": "[open, deferred] Auto-code collision retry / 500-after-exhaustion (R6, _persist_code) unexercised. Risk-based-expansion item, not an AC.",
+      "remediation": "Optional: monkeypatch code generation to force a collision; assert bounded retry + exhaustion 500.",
+      "agent": "vibe-test-designer"
+    }
+  ]
+}

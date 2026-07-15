@@ -1,0 +1,28 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-07-13T00-06-44Z",
+  "target": "/Users/antonio/AI/MyCode/mdtoc",
+  "subagents_used": ["vibe-test-designer", "vibe-security-auditor"],
+  "findings": [
+    {
+      "category": "tests",
+      "severity": "risk",
+      "file": "tests/mdtoc/test_render_idempotence.py",
+      "line": 24,
+      "checkpoint": "4",
+      "message": "The empty-TOC managed-region byte form '<!-- toc -->\\n\\n<!-- /toc -->' (one blank line, no bullets) is never byte-asserted. It is only exercised by test_fixed_point, which proves render is a fixed point but cannot detect wrong empty-region spacing: a variant emitting two blank lines is still a fixed point and would pass every existing test. test_build_toc_empty_* only assert build_toc()=='', not how render splices an empty body. The populated form is byte-locked by simple.expected.md; the empty branch (only-leading-H1 doc, or --max-depth below all headings) is unguarded at the render level. This is plan verification check (g)'s empty-TOC-collapse clause.",
+      "remediation": "Add a golden-byte assertion for the empty branch, e.g. render('# T\\n\\n<!-- toc -->\\n<!-- /toc -->\\n', 6) == '# T\\n\\n<!-- toc -->\\n\\n<!-- /toc -->\\n', plus the --max-depth-1-with-leading-H1 collapse case. A small data/empty_toc.expected.md keeps the whitespace contract reviewable.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/mdtoc/cli.py",
+      "line": 61,
+      "checkpoint": "5",
+      "message": "Defense-in-depth (not exploitable in this local single-user CLI): (1) path.write_text truncates-then-writes, so an interrupted run (crash, SIGKILL, ENOSPC) can leave the user's Markdown file truncated with no backup; (2) reads/writes follow symlinks and there is a benign read->write TOCTOU gap. No network or privilege boundary is crossed; heading text echoed into link text is correct for a Markdown transform with no shell/SQL/template sink; regexes (ATX_RE/FENCE_RE/IDCOUNT_RE/slugify) were timed and scale linearly (no ReDoS); runtime dependencies are empty and dev deps carry pinned floors.",
+      "remediation": "Write to a temp file in the target directory and os.replace() it over the target for an atomic rename, eliminating the truncation/data-loss window. Optionally realpath the target so the temp file lands on the same filesystem. No behavior change required for the current threat model.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

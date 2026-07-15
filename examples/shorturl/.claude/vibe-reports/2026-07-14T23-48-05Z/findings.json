@@ -1,0 +1,44 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-07-14T23:48:05Z",
+  "subagents_used": ["vibe-test-designer"],
+  "note": "Verify after CP11 (two edge-case bug fixes from external Codex review). Both fixes covered by real assertions; AC #4 strengthened; no AC regressed. Security carried forward: both changes tighten validation / add an error catch (reduce surface, add none). 2 new advisories + carried deferrals.",
+  "findings": [
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/codes.py",
+      "line": 71,
+      "message": "Residual of the same class as fixed bug #1: validate_url now rejects control chars (<0x20, 0x7F) but still accepts high-codepoint characters (>0xFF). Werkzeug's Location header is latin-1-encoded, so a target URL with a non-latin-1 codepoint could still raise at redirect time (500). Lower risk than CRLF (needs an operator to submit a raw non-ASCII URL) and blocks no AC.",
+      "remediation": "Optional follow-up: require URLs to be ASCII (RFC 3986 — non-ASCII should be percent-encoded/IDN by the client), closing the whole malformed-URL->redirect-500 class in one rule. Not done here to stay within CP11's approved scope.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "tests/test_redirect.py",
+      "line": 104,
+      "message": "The delete-race test monkeypatches db.insert_click to raise IntegrityError (proves the handler's except->404), rather than exercising a real FK cascade delete between get_code and insert_click. Fair mechanism-level proxy (real cascade does raise this exact error), but not a true end-to-end race.",
+      "remediation": "Optional: an integration test that deletes the code on a second connection after the handler's read and asserts 404 end-to-end.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/api.py",
+      "line": 39,
+      "message": "[carried, deferred] No MAX_CONTENT_LENGTH on create_app; POST /api/codes buffers the full body before validation. Authenticated-only. Defense-in-depth.",
+      "remediation": "Set app.config['MAX_CONTENT_LENGTH'] to a small cap (e.g. 16*1024).",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/db.py",
+      "line": 164,
+      "message": "[carried, deferred] Referer/User-Agent stored verbatim and echoed in stats JSON. Safe as JSON; latent XSS only with a future HTML UI.",
+      "remediation": "Keep serving as JSON; HTML-escape at render if a UI is added.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

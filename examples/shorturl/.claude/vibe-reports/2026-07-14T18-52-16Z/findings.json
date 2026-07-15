@@ -1,0 +1,54 @@
+{
+  "mode": "review",
+  "scanned_at": "2026-07-14T18:52:16Z",
+  "subagents_used": ["vibe-code-reviewer", "vibe-security-auditor"],
+  "findings": [
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/api.py",
+      "line": 62,
+      "checkpoint": "4",
+      "message": "Independently flagged by both reviewers. hmac.compare_digest raises TypeError when a str argument contains non-ASCII characters; Werkzeug decodes header values latin-1, so an X-API-Key with a high byte (e.g. 'é') reaches the auth gate and raises, surfacing as a generic 500 instead of the contracted 403. It still fails closed (no bypass, no state change) — robustness, not a hole.",
+      "remediation": "Compare on bytes to make the check total: hmac.compare_digest(provided.encode('utf-8'), expected.encode('utf-8')); or wrap the compare and treat any exception as an auth failure (403).",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "dependency",
+      "severity": "advisory",
+      "file": "pyproject.toml",
+      "line": 30,
+      "checkpoint": "1",
+      "message": "types-pyyaml is a dev dependency but nothing in src/ or tests/ imports yaml. It is a leftover from the profile seed and adds noise to the intentionally minimal dependency surface.",
+      "remediation": "Drop types-pyyaml from the [dependency-groups] dev list.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "dependency",
+      "severity": "advisory",
+      "file": "pyproject.toml",
+      "line": 9,
+      "message": "Runtime deps use lower-bound floors only (flask>=3.0, waitress>=3.0) with no upper cap and no committed lockfile, so a fresh install is non-reproducible and could pull a breaking/compromised future release. Confirmed by both the verify audit and this review.",
+      "remediation": "Commit uv.lock (`uv lock`) and consider compatible-release caps (flask>=3.0,<4; waitress>=3.0,<4).",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/api.py",
+      "line": 39,
+      "message": "No Flask MAX_CONTENT_LENGTH is set, so POST /api/codes buffers the full request body via get_json before validating. API-key gated (authenticated-only resource exhaustion, not a public DoS); waitress's ~1GB default is the only bound. Defense-in-depth.",
+      "remediation": "Set app.config['MAX_CONTENT_LENGTH'] to a small limit (e.g. 16*1024) in create_app so oversized bodies get 413 before parsing.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/db.py",
+      "line": 164,
+      "message": "Referer/User-Agent from the public redirect are stored verbatim (api.py:131-132) and Referer is echoed in the stats JSON (top_referers). No XSS today (application/json, no HTML UI); latent stored-XSS only if a future admin HTML dashboard renders these unescaped.",
+      "remediation": "Keep serving as JSON; HTML-escape at render time if a UI is ever added; optionally length-cap stored header values.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

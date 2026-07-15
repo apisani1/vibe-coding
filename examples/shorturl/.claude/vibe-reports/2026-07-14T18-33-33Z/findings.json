@@ -1,0 +1,74 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-07-14T18:33:33Z",
+  "subagents_used": ["vibe-test-designer", "vibe-security-auditor"],
+  "findings": [
+    {
+      "category": "correctness",
+      "severity": "blocker",
+      "file": "src/shorturl/cli.py",
+      "line": 116,
+      "checkpoint": "6",
+      "message": "AC #10 requires `shorturl list` to print each code's status, target, created AND expiry dates, and click count. The rendered table (_print_codes) shows CODE / STATUS / CLICKS / EXPIRES / TARGET but omits the created date entirely, though created_at is already selected by db.list_codes. The acceptance criterion is not fully met. No test asserted the columns, so this passed all build reviews.",
+      "remediation": "Add a CREATED column to _print_codes (render row['created_at']); extend test_list_reflects_db to assert the target URL, the created date, and the expiry date all appear in a code's line.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "tests",
+      "severity": "risk",
+      "file": "tests/test_cli.py",
+      "line": 71,
+      "checkpoint": "6",
+      "message": "AC #8 (manual expiry keeps history) is only half proven. test_expire_makes_redirect_410 seeds a code with no clicks and asserts 410 (proving the code ROW survives), but the 'prior clicks remain in the DB' clause — the guarantee that distinguishes expire from delete — is never asserted. Behaviourally correct (expire_code only sets active=0), but unpinned by any check.",
+      "remediation": "Add a CLI test: seed a code with clicks, run `shorturl expire`, then assert SELECT COUNT(*) FROM clicks for that code is unchanged and get_code is not None.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "tests/test_cli.py",
+      "line": 79,
+      "checkpoint": "6",
+      "message": "AC #11 delete clicks-cascade is only transitively covered: test_delete_removes_code_everywhere asserts 404 + gone-from-list but not that the click rows were removed. The cascade is proven at the unit layer (test_db.py test_delete_cascades_clicks) against the same db.delete_code the CLI calls — acceptable transitive coverage, flagged for explicitness.",
+      "remediation": "Optional: after `shorturl delete`, assert the code's click count is 0 to re-anchor the cascade at the CLI layer.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "src/shorturl/codes.py",
+      "line": 42,
+      "checkpoint": "4",
+      "message": "The auto-code collision retry / 500-after-exhaustion path (R6, api._persist_code) is never exercised. The UNIQUE constraint it relies on is proven (test_db.py) but no test forces generate_code to collide. This is a risk-based-expansion item in the verification plan, not one of the 15 ACs.",
+      "remediation": "Optional: monkeypatch code generation to a fixed value with a pre-seeded collision; assert bounded retry succeeds and exhaustion returns 500.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "dependency",
+      "severity": "advisory",
+      "file": "pyproject.toml",
+      "line": 9,
+      "message": "flask and waitress are declared with lower-bound floors only ('>=3.0') and no committed lockfile, so installs resolve to whatever is latest and builds are non-reproducible. Not a live vulnerability.",
+      "remediation": "Add compatible-release upper bounds (e.g. 'flask>=3.0,<4.0', 'waitress>=3.0,<4.0') and commit uv.lock so deployments install pinned, audited versions.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/api.py",
+      "line": 39,
+      "message": "create_app sets no MAX_CONTENT_LENGTH, so POST /api/codes buffers an arbitrarily large JSON body before validation. API-key gated, so limited to authenticated callers (resource-exhaustion, not an unauthenticated vector). Defense-in-depth only.",
+      "remediation": "Set app.config['MAX_CONTENT_LENGTH'] to a small limit (e.g. 64KB) so oversized bodies get 413 before parsing; optionally cap target_url/alias string lengths in the validators.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/shorturl/api.py",
+      "line": 131,
+      "message": "Attacker-controlled Referer and User-Agent headers from the public redirect are stored verbatim and later echoed in the authenticated stats JSON (top_referers). Safe today (JSON response, not HTML, so not executed); latent stored-XSS if a future admin dashboard renders top_referers as HTML.",
+      "remediation": "Keep serving these as JSON (never inject into HTML unescaped); optionally truncate referer/user_agent to a sane max length on insert. HTML-escape at render time if a UI is added.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "mode": "env",
+  "created_at": "2026-07-15T00-33-48Z",
+  "target": "/Users/antonio/AI/MyCode/mdtoc",
+  "greenfield": false,
+  "scope": "Re-audit the agent environment (CLAUDE.md / AGENTS.md) for drift.",
+  "upstream_run": null,
+  "upstream_artifacts": [],
+  "subagents_used": [],
+  "artifacts": ["env-report.md", "summary.md", "state.json"],
+  "applied": []
+}

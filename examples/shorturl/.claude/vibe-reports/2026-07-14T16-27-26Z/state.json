@@ -1,0 +1,15 @@
+{
+  "mode": "define",
+  "created_at": "2026-07-14T16:27:26Z",
+  "target": "/Users/antonio/AI/MyCode/shorturl",
+  "greenfield": true,
+  "scope": "URL shortener service (SQLite persistence, HTTP API, CLI admin, click analytics with expiry), Python + UV, MVP per spec",
+  "upstream_run": null,
+  "upstream_artifacts": [],
+  "subagents_used": [],
+  "artifacts": ["spec.md", "summary.md"],
+  "profile": {
+    "present": true,
+    "note": "bare greenfield; profile tool choices + style folded into spec Constraints; assets to be seeded at build checkpoint 0"
+  }
+}
