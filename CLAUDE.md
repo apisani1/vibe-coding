@@ -69,3 +69,5 @@ skills/vibe-coding-workspace/   # eval/dev workspace — gitignored, not shipped
 Built on / inspired by Islem Maboud's Agentic Engineering Skills, Forrest Chang's LLM
 behavioral skill (Karpathy's Claude Code guidelines), and Arjan Egges's 7-step Software
 Design Guide. Full credits in `README.md`.
+
+See @./notes for additional development ideas
