@@ -7,6 +7,8 @@ separate session.** For each: run the one-time **Setup** in your shell, paste th
 Targets use `~/code/...`; change to taste. Greenfield targets should be empty dirs — the
 skill creates its run dir with `--force`.
 
+Note: the examples in this folder are the results of running the prompts above and a single round of bug review using OpenAI Codex and a few fixes implemented by Claude Code.
+
 ---
 
 ## 1. Small bare-greenfield CLI — full happy path
@@ -184,7 +186,4 @@ error; no interactive questions asked.
 
 ---
 
-### Coverage suggestion
-A four-session sweep that hits every major branch: **1** (happy path) → **2** (phases) →
-**6a + 6b** (autopilot safety) → **5** (existing codebase). Add **3/4** to see the
-security and test sub-agents, and **7** for scaffolding + CI.
+
