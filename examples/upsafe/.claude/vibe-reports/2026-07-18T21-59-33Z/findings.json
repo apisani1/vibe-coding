@@ -1,0 +1,67 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-07-18T22:06:15Z",
+  "subagents_used": ["vibe-test-designer", "vibe-security-auditor"],
+  "findings": [
+    {
+      "category": "tests",
+      "severity": "risk",
+      "file": "tests/test_download.py",
+      "line": 62,
+      "checkpoint": "7",
+      "message": "Criterion 8 (token opacity) is proven at runtime (this verify run confirmed unknown vs expired return byte-identical bodies AND identical header sets modulo Date), but the automated test asserts only equal status + body, not header-set equality that the verification plan promised. A future change adding a header on only one path would regress opacity undetected.",
+      "remediation": "Extend test_unknown_and_expired_are_indistinguishable to normalize (drop Date) and assert equal header dicts for the expired vs unknown 404s.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "tests/test_e2e_security.py",
+      "line": 62,
+      "checkpoint": "8",
+      "message": "Criterion 10 lists API key, token, AND file contents. The e2e log scan checks key/token/filename but never scans for a file-contents sentinel; non-leakage of contents rests only on the structural log_request field-allow-list unit test.",
+      "remediation": "Upload a payload containing a unique ASCII sentinel and assert it is absent from captured log output, closing the file-contents facet e2e.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "tests/test_e2e_security.py",
+      "line": 33,
+      "checkpoint": "8",
+      "message": "Criterion 5 enumerates a NUL/control-byte filename variant. The e2e traversal parametrization covers ../.., backslash, absolute, and TAB, but not a NUL-in-filename at the HTTP layer (NUL is only tested at the is_safe_text content layer). Largely moot because the stored name is server-generated and the filename is never a path component.",
+      "remediation": "Optionally add a NUL-in-filename variant to the traversal parametrization, or explicitly note that transport strips it.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/upsafe/app.py",
+      "line": 39,
+      "checkpoint": "6",
+      "message": "FastAPI is created with defaults, so /docs, /redoc, and /openapi.json are served unauthenticated. Low exposure as shipped (binds 127.0.0.1, no secrets in the schema) but becomes information disclosure if bound to 0.0.0.0 without an auth proxy.",
+      "remediation": "Pass docs_url=None, redoc_url=None, openapi_url=None to FastAPI() (optionally re-enabled via a dev env flag).",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/upsafe/validation.py",
+      "line": 64,
+      "checkpoint": "4",
+      "message": "Content validation (magic sniff + is_safe_text) inspects only the 8 KiB head; a file can carry a valid header and arbitrary tail bytes (polyglot / trailing binary in .txt). Acknowledged in the module docstring; contained because downloads are served attachment + nosniff (never rendered/executed).",
+      "remediation": "Accept as-is under the attachment+nosniff contract; if stronger guarantees are needed, validate the full stream during store_stream or add a content scanner before issuing a token.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "dependency",
+      "severity": "advisory",
+      "file": "pyproject.toml",
+      "line": 12,
+      "checkpoint": "8",
+      "message": "Runtime deps (fastapi, uvicorn, python-multipart) use open-ended lower bounds with no upper cap; only starlette is range-pinned. Mitigated by the committed uv.lock (exact versions + sha256), so `uv sync` deploys are reproducible; the floors matter only for lockfile-less fresh resolutions.",
+      "remediation": "Keep relying on uv.lock for deploys; optionally add conservative upper bounds (e.g. fastapi>=0.115,<1) and refresh the lock on a schedule for security patches.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

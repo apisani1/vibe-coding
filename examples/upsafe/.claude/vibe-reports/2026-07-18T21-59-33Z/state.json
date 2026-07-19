@@ -1,0 +1,13 @@
+{
+  "mode": "verify",
+  "created_at": "2026-07-18T21-59-33Z",
+  "target": "/Users/antonio/AI/MyCode/upsafe",
+  "greenfield": true,
+  "scope": "upsafe — verify the completed build against the 12 acceptance criteria",
+  "upstream_run": "2026-07-18T17-30-16Z",
+  "upstream_artifacts": ["plan.md", "checklist.md", "verification-plan.md", "build-log.md"],
+  "subagents_used": ["vibe-test-designer", "vibe-security-auditor"],
+  "artifacts": ["verify-report.md", "findings.json", "summary.md"],
+  "verdict": "pass",
+  "findings_summary": { "blocker": 0, "risk": 1, "advisory": 5 }
+}

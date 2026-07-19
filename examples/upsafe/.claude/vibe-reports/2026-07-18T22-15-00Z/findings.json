@@ -1,0 +1,48 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-07-18T22:15:35Z",
+  "subagents_used": [],
+  "note": "Incremental re-verify after the follow-up build that closed VF-1 and VF-4. Full specialist audits were performed in the prior verify run (2026-07-18T21-59-33Z) and remain valid for the unchanged surface; this run confirms the two fixes and re-runs all gates inline.",
+  "findings": [
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "tests/test_e2e_security.py",
+      "line": 62,
+      "checkpoint": "8",
+      "message": "Criterion 10's file-contents secret class is not sentinel-scanned e2e; non-leakage of contents rests on the structural log_request field-allow-list unit test. (Was VF-2; still open, unchanged.)",
+      "remediation": "Upload a payload with a unique ASCII sentinel and assert it is absent from captured log output.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "tests/test_e2e_security.py",
+      "line": 33,
+      "checkpoint": "8",
+      "message": "NUL/control-byte filename variant not exercised at the HTTP layer (only at the is_safe_text content layer). Structurally moot — the filename is never a path component. (Was VF-3; still open, unchanged.)",
+      "remediation": "Optionally add a NUL-in-filename variant to the traversal parametrization, or note transport strips it.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/upsafe/validation.py",
+      "line": 64,
+      "checkpoint": "4",
+      "message": "Content validation inspects only the 8 KiB head; a polyglot / trailing-binary file can pass. Contained by the attachment + nosniff serving contract (never rendered/executed). (Was VF-5; still open, accepted.)",
+      "remediation": "Accept under the attachment+nosniff contract; validate the full stream or add a content scanner if stronger guarantees are needed.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "dependency",
+      "severity": "advisory",
+      "file": "pyproject.toml",
+      "line": 12,
+      "checkpoint": "8",
+      "message": "Runtime deps (fastapi, uvicorn, python-multipart) use open-ended lower bounds; only starlette is range-pinned. Mitigated by the committed uv.lock (exact versions + hashes). (Was VF-6; still open, mitigated.)",
+      "remediation": "Rely on uv.lock for deploys; optionally add conservative upper bounds and refresh the lock on a schedule.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

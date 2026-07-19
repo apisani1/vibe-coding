@@ -1,0 +1,11 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-07-19T02:18:27Z",
+  "subagents_used": [],
+  "note": "Incremental re-verify confirming VF-7 (failure-path logging) closed. Delta is reject-path logging with 3 new tests; no acceptance-criteria behavior changed. Full specialist audits from 2026-07-19T02-02-08Z remain valid.",
+  "findings": [
+    {"category": "tests", "severity": "advisory", "file": "src/upsafe/middleware.py", "line": 77, "checkpoint": "follow-up", "message": "Middleware streaming (no-Content-Length) abort->413 path proven only at unit level; TestClient always sets Content-Length so the exception->_send_413 branch isn't exercised through the real app stack. Defensive branches (non-http scope, non-integer CL, response-already-started) untested. (VF-8)", "remediation": "Accept as a TestClient limitation, or add a raw-ASGI/httpx-transport chunked-body integration test.", "agent": "vibe-test-designer"},
+    {"category": "security", "severity": "advisory", "file": "src/upsafe/metadata.py", "line": 103, "checkpoint": "follow-up", "message": "No expiry reaper — expired quarantine files persist on disk forever (documented MVP deferral). (VF-9)", "remediation": "Add a reaper (startup sweep and/or periodic task) unlinking files + deleting rows where expires_at <= now.", "agent": "vibe-security-auditor"},
+    {"category": "dependency", "severity": "advisory", "file": "pyproject.toml", "line": 12, "checkpoint": "follow-up", "message": "Open-ended dep floors (fastapi/uvicorn/python-multipart); only starlette capped. Mitigated by committed uv.lock. (VF-6)", "remediation": "Add conservative upper bounds matching tested majors; keep uv.lock committed.", "agent": "vibe-security-auditor"}
+  ]
+}

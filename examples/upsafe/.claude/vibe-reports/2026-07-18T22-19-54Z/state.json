@@ -1,0 +1,13 @@
+{
+  "mode": "review",
+  "created_at": "2026-07-18T22-19-54Z",
+  "target": "/Users/antonio/AI/MyCode/upsafe",
+  "greenfield": true,
+  "scope": "upsafe — independent quality/security review of the completed build",
+  "upstream_run": "2026-07-18T22-15-00Z",
+  "upstream_artifacts": ["verify-report.md", "findings.json"],
+  "subagents_used": ["vibe-code-reviewer"],
+  "artifacts": ["review.md", "findings.json", "summary.md"],
+  "verdict": "approve",
+  "findings_summary": { "blocker": 0, "risk": 0, "advisory": 7 }
+}

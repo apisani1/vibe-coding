@@ -1,0 +1,13 @@
+{
+  "mode": "review",
+  "scanned_at": "2026-07-18T22:37:56Z",
+  "subagents_used": [],
+  "note": "Incremental re-review after D-1/R-1 follow-up. Full vibe-code-reviewer pass in prior review (22-19-54Z) remains valid; delta (dead-code deletion + 3 tests) re-checked inline. D-1 and R-1 closed.",
+  "findings": [
+    {"category": "correctness", "severity": "advisory", "file": "src/upsafe/routes.py", "line": 130, "checkpoint": "6", "message": "sqlite insert/get run synchronously in async handlers (only store_stream offloaded). MVP-acceptable (R-2).", "remediation": "Wrap metadata calls in run_in_threadpool if concurrency grows, or note in README Limitations.", "agent": "vibe-code-reviewer"},
+    {"category": "correctness", "severity": "advisory", "file": "src/upsafe/routes.py", "line": 92, "checkpoint": "6", "message": "Oversized non-file field maps to 413 not 400 (shares 'maximum size' substring). UX nit (R-3).", "remediation": "Distinguish 'Field exceeded' from 'Part exceeded' if precise status matters; otherwise accept.", "agent": "vibe-code-reviewer"},
+    {"category": "simplicity", "severity": "advisory", "file": "src/upsafe/validation.py", "line": 85, "checkpoint": "4", "message": "resolve_type re-checks ext already ensured by check_extension in the upload path; kept for standalone reuse (S-1).", "remediation": "Leave as-is if resolve_type is independently callable; else drop the duplicate guard.", "agent": "vibe-code-reviewer"},
+    {"category": "security", "severity": "advisory", "file": "src/upsafe/validation.py", "line": 64, "checkpoint": "4", "message": "Head-only (8 KiB) content validation; contained by attachment+nosniff (VF-5).", "remediation": "Accept under the serving contract, or scan the full stream if stronger guarantees needed.", "agent": "vibe-security-auditor"},
+    {"category": "dependency", "severity": "advisory", "file": "pyproject.toml", "line": 12, "checkpoint": "8", "message": "Open-ended dep floors; mitigated by committed uv.lock (VF-6).", "remediation": "Rely on uv.lock; optionally add upper bounds and refresh on a schedule.", "agent": "vibe-security-auditor"}
+  ]
+}

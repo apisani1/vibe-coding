@@ -1,0 +1,58 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-07-19T02:02:27Z",
+  "subagents_used": ["vibe-security-auditor", "vibe-test-designer"],
+  "note": "Substantive verify after the two P1 security fixes (transport-layer body cap + uvicorn access_log off). Both specialists re-derived from source rather than folding forward, since the prior audit had missed the file-part DoS. Criterion 4 now genuinely met and covered end-to-end.",
+  "findings": [
+    {
+      "category": "security",
+      "severity": "risk",
+      "file": "src/upsafe/__main__.py",
+      "line": 23,
+      "checkpoint": "follow-up",
+      "message": "REGRESSION introduced by Fix 1: access_log=False disables uvicorn's per-request log, but the app's log_request only fires on success paths (201 upload, 200 download). Every reject — 401 (bad/absent key), 413 (oversize), 415/400 (disallowed/malformed), 404 — now emits NO log line, removing all visibility into API-key brute-force and upload abuse. Correctly stops the /downloads/<token> leak (D8) but throws out failure observability with it.",
+      "remediation": "Keep access_log off, but log 4xx/5xx through the redacting logger using the route TEMPLATE only (never the concrete path/token): emit log_request on the API-key 401 branch and the HTTPException/MultiPartException branches in routes.py.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "tests",
+      "severity": "risk",
+      "file": "src/upsafe/routes.py",
+      "line": 140,
+      "checkpoint": "follow-up",
+      "message": "Coverage facet of the same regression: no test asserts a rejected request produces any log record. test_logging.py only exercises 201/200-shaped calls; the e2e log scan covers a success-only cycle. If failure-path logging is added, it needs a test; if rejects are intentionally unlogged, that decision should be recorded so the audit finding can be closed as accepted.",
+      "remediation": "Add a test that issues a rejected upload (wrong key and/or oversize) with the upsafe logger captured, asserting a redacted >=400 log line (method/route/status, no sentinels). Or record the 'rejects not logged' decision explicitly.",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "src/upsafe/middleware.py",
+      "line": 77,
+      "checkpoint": "follow-up",
+      "message": "The streaming (no-Content-Length) abort -> 413 branch is proven only at the unit level with a scripted ASGI receive. Through the assembled app the only integration proof goes via TestClient, which always sets Content-Length and thus exercises the fast path, never the limited_receive exception->_send_413 path through the real FastAPI stack. Defensive branches also untested: non-http scope pass-through, non-integer Content-Length break, response-already-started re-raise.",
+      "remediation": "Accept as a TestClient limitation (documented, like the plan's peak-memory caveat), or add a raw-ASGI/httpx-transport integration test streaming a chunked no-Content-Length body through create_app().",
+      "agent": "vibe-test-designer"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/upsafe/metadata.py",
+      "line": 103,
+      "checkpoint": "follow-up",
+      "message": "Expiry is read-time only; nothing deletes the on-disk quarantine file or row. Expired objects become inaccessible but their bytes persist forever -> unbounded disk growth and content retained past TTL, partially defeating the temp-disk concern the new middleware hardens. (Documented as a deferred MVP limitation in spec/design/README; the auditor re-raised it as worth doing.)",
+      "remediation": "Add a reaper (startup sweep and/or periodic task) that unlinks quarantine files and deletes rows where expires_at <= now.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "dependency",
+      "severity": "advisory",
+      "file": "pyproject.toml",
+      "line": 12,
+      "checkpoint": "follow-up",
+      "message": "fastapi/uvicorn/python-multipart are floors with no upper bound; only starlette is capped (>=1.3.1,<2). The DoS mitigation depends on multipart/Starlette parsing behavior. Mitigated by committed uv.lock (exact pins today).",
+      "remediation": "Add conservative upper bounds matching the tested majors (fastapi<1, uvicorn<1, python-multipart<0.1); keep uv.lock committed.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "mode": "plan",
+  "created_at": "2026-07-18T17-30-16Z",
+  "target": "/Users/antonio/AI/MyCode/upsafe",
+  "greenfield": true,
+  "scope": "upsafe \u2014 secure file-upload HTTP service (FastAPI, UV): phased build plan (8 checkpoints, 3 phases) with verification defined before code",
+  "upstream_run": "2026-07-18T17-09-56Z",
+  "upstream_artifacts": [
+    "design.md",
+    "decisions.md"
+  ],
+  "subagents_used": [
+    "vibe-test-designer",
+    "vibe-overseer"
+  ],
+  "artifacts": [
+    "plan.md",
+    "checklist.md",
+    "verification-plan.md",
+    "summary.md",
+    "build-log.md"
+  ],
+  "build": {
+    "approvals": [
+      "2026-07-18T17:40:48Z --auto grant \u2014 '/vibe build --auto'; human-approved dependency install via uv (out-of-band, --auto carve-out)",
+      "2026-07-18T18:00Z CP3 \u2014 human-approved Touches amendment (add errors.py) + advisory hardening; vibe-overseer re-approved",
+      "2026-07-18T18:55Z CP8 \u2014 vibe-overseer APPROVE (re-dispatch after spend-limit interruption); 2 benign advisories (uv.lock specifier line; ran on py3.14)"
+    ],
+    "completed_checkpoints": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "last_updated": "2026-07-18T18:55:00Z",
+    "auto": {
+      "granted_at": "2026-07-18T17:40:48Z",
+      "grant_quote": "/vibe build --auto",
+      "max_checkpoints": 10
+    }
+  }
+}

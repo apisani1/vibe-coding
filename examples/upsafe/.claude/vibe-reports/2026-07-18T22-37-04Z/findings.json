@@ -1,0 +1,12 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-07-18T22:37:11Z",
+  "subagents_used": [],
+  "note": "Incremental re-verify after the follow-up build closing D-1 (dead code) + R-1 (413 mapping tests). No behavior change; prior specialist audits remain valid.",
+  "findings": [
+    {"category": "tests", "severity": "advisory", "file": "tests/test_e2e_security.py", "line": 62, "checkpoint": "8", "message": "Criterion 10 file-contents class not sentinel-scanned e2e (VF-2).", "remediation": "Upload a payload with a unique ASCII sentinel and assert absent from logs.", "agent": "vibe-test-designer"},
+    {"category": "tests", "severity": "advisory", "file": "tests/test_e2e_security.py", "line": 33, "checkpoint": "8", "message": "NUL-in-filename not exercised at HTTP layer; structurally moot (VF-3).", "remediation": "Optionally add a NUL-in-filename variant or note transport strips it.", "agent": "vibe-test-designer"},
+    {"category": "security", "severity": "advisory", "file": "src/upsafe/validation.py", "line": 64, "checkpoint": "4", "message": "Head-only (8 KiB) content validation; contained by attachment+nosniff (VF-5).", "remediation": "Accept under the serving contract, or scan the full stream if stronger guarantees needed.", "agent": "vibe-security-auditor"},
+    {"category": "dependency", "severity": "advisory", "file": "pyproject.toml", "line": 12, "checkpoint": "8", "message": "Open-ended dep floors; mitigated by committed uv.lock (VF-6).", "remediation": "Rely on uv.lock; optionally add upper bounds and refresh on a schedule.", "agent": "vibe-security-auditor"}
+  ]
+}

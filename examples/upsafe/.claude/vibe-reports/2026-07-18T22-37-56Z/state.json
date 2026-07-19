@@ -1,0 +1,7 @@
+{
+  "mode": "review", "created_at": "2026-07-18T22-37-56Z", "target": "/Users/antonio/AI/MyCode/upsafe",
+  "greenfield": true, "scope": "re-review after D-1/R-1 follow-up build",
+  "upstream_run": "2026-07-18T22-37-04Z", "upstream_artifacts": ["verify-report.md", "findings.json"],
+  "subagents_used": [], "artifacts": ["review.md", "findings.json", "summary.md"],
+  "verdict": "approve", "findings_summary": {"blocker": 0, "risk": 0, "advisory": 5}
+}

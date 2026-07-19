@@ -1,0 +1,78 @@
+{
+  "mode": "review",
+  "scanned_at": "2026-07-18T22:30:46Z",
+  "subagents_used": ["vibe-code-reviewer"],
+  "note": "Security dimension folded forward from the vibe-security-auditor pass in verify run 2026-07-18T21-59-33Z (post-dates all code except the VF-1/VF-4 follow-up, which was inline-checked here and is trivially safe: default-off docs flag, fail-closed bool parser). No re-audit dispatched.",
+  "findings": [
+    {
+      "category": "design-drift",
+      "severity": "advisory",
+      "file": "src/upsafe/errors.py",
+      "line": 18,
+      "checkpoint": "3",
+      "message": "TooManyParts is defined but imported/raised nowhere (confirmed by grep). The multi-part case is handled by Starlette's max_files (MultiPartException -> 400) and the len(files)!=1 guard (HTTPException). Orphan left by the build.",
+      "remediation": "Delete TooManyParts, or actually raise it at routes.py:97-98 instead of a bare HTTPException.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "correctness",
+      "severity": "advisory",
+      "file": "src/upsafe/routes.py",
+      "line": 79,
+      "checkpoint": "6",
+      "message": "413-vs-400 discrimination depends on the substring 'maximum size' in Starlette's MultiPartException text. Correct against pinned 1.3.1, but couples HTTP status to an English message; a reword within '>=1.3.1,<2' could silently reclassify oversize uploads as 400. The storage byte-guard does not cover this branch.",
+      "remediation": "Add a regression test that drives a real oversize part and asserts 413 (so a message change fails loudly), or narrow the pin.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "correctness",
+      "severity": "advisory",
+      "file": "src/upsafe/routes.py",
+      "line": 130,
+      "checkpoint": "6",
+      "message": "sqlite connect/insert (upload) and connect/get (download) run synchronously in the async handlers, blocking the event loop, while only store_stream is offloaded to a threadpool. Acceptable for the single-node/low-concurrency MVP; inconsistent async boundary and a latent throughput ceiling under concurrency.",
+      "remediation": "No change for MVP; if concurrency grows, wrap metadata calls in run_in_threadpool, or note in README Limitations.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "simplicity",
+      "severity": "advisory",
+      "file": "src/upsafe/validation.py",
+      "line": 85,
+      "checkpoint": "4",
+      "message": "resolve_type re-runs the 'ext not in allowed_types' check that check_extension already guaranteed two lines earlier in the upload path. Harmless; defensible for standalone reuse of resolve_type.",
+      "remediation": "Leave as-is if resolve_type is meant to be independently callable; otherwise drop the duplicate guard.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "correctness",
+      "severity": "advisory",
+      "file": "src/upsafe/routes.py",
+      "line": 92,
+      "checkpoint": "6",
+      "message": "An oversized non-file form field ('Field exceeded maximum size') maps to 413 rather than 400 because it shares the 'maximum size' substring. UX/semantics nit, not a security issue (nothing persisted; the real oversize-file case is correctly 413).",
+      "remediation": "Distinguish 'Field exceeded' from 'Part exceeded' in _too_large_or_bad_request if precise status matters; otherwise accept.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "src/upsafe/validation.py",
+      "line": 64,
+      "checkpoint": "4",
+      "message": "Content validation inspects only the 8 KiB head; a polyglot / trailing-binary file can pass. Contained by attachment + nosniff serving (never rendered/executed). Carried forward from verify audit (VF-5).",
+      "remediation": "Accept under the attachment+nosniff contract; validate the full stream or add a content scanner if stronger guarantees are needed.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "dependency",
+      "severity": "advisory",
+      "file": "pyproject.toml",
+      "line": 12,
+      "checkpoint": "8",
+      "message": "Runtime deps (fastapi, uvicorn, python-multipart) use open-ended lower bounds; only starlette is range-pinned. Mitigated by committed uv.lock. Carried forward from verify audit (VF-6).",
+      "remediation": "Rely on uv.lock for deploys; optionally add conservative upper bounds and refresh the lock on a schedule.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

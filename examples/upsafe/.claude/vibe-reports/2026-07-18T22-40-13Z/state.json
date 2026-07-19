@@ -1,0 +1,16 @@
+{
+  "mode": "env",
+  "created_at": "2026-07-18T22-40-13Z",
+  "target": "/Users/antonio/AI/MyCode/upsafe",
+  "greenfield": true,
+  "scope": "propose CLAUDE.md agent instructions for upsafe",
+  "upstream_run": null,
+  "upstream_artifacts": [],
+  "subagents_used": [],
+  "artifacts": [
+    "env-report.md",
+    "summary.md",
+    "CLAUDE.md"
+  ],
+  "applied": true
+}

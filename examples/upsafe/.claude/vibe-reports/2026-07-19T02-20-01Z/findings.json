@@ -1,0 +1,15 @@
+{
+  "mode": "review",
+  "scanned_at": "2026-07-19T02:24:00Z",
+  "subagents_used": ["vibe-code-reviewer"],
+  "note": "Review of the security-hardening diff (middleware + access_log + reject logging). vibe-code-reviewer returned 0 findings on the diff. Security folded forward from the fresh audit at verify 2026-07-19T02-02-08Z. Findings below are the standing accepted/deferred advisory backlog for the whole service (none new this pass).",
+  "findings": [
+    {"category": "correctness", "severity": "advisory", "file": "src/upsafe/routes.py", "line": 130, "message": "sqlite insert/get run synchronously in async handlers; only store_stream is offloaded. MVP-acceptable (R-2).", "remediation": "Wrap metadata calls in run_in_threadpool if concurrency grows.", "agent": "vibe-code-reviewer"},
+    {"category": "correctness", "severity": "advisory", "file": "src/upsafe/routes.py", "line": 92, "message": "Oversized non-file field maps to 413 not 400 (shares 'maximum size' substring). Nit; nothing persisted (R-3).", "remediation": "Distinguish 'Field exceeded' from 'Part exceeded' if precise status matters.", "agent": "vibe-code-reviewer"},
+    {"category": "simplicity", "severity": "advisory", "file": "src/upsafe/validation.py", "line": 85, "message": "resolve_type re-checks ext already ensured by check_extension in the upload path; kept for standalone reuse (S-1).", "remediation": "Leave as-is or drop the duplicate guard.", "agent": "vibe-code-reviewer"},
+    {"category": "security", "severity": "advisory", "file": "src/upsafe/validation.py", "line": 64, "message": "Head-only (8 KiB) content validation; contained by attachment+nosniff (VF-5).", "remediation": "Accept under the serving contract, or scan the full stream if stronger guarantees needed.", "agent": "vibe-security-auditor"},
+    {"category": "dependency", "severity": "advisory", "file": "pyproject.toml", "line": 12, "message": "Open dep floors; mitigated by committed uv.lock (VF-6).", "remediation": "Add conservative upper bounds; keep uv.lock committed.", "agent": "vibe-security-auditor"},
+    {"category": "tests", "severity": "advisory", "file": "src/upsafe/middleware.py", "line": 77, "message": "Middleware streaming->413 path only unit-tested; TestClient always sets Content-Length (VF-8).", "remediation": "Add a raw-ASGI/httpx-transport chunked-body integration test.", "agent": "vibe-test-designer"},
+    {"category": "security", "severity": "advisory", "file": "src/upsafe/metadata.py", "line": 103, "message": "No expiry reaper — expired quarantine files persist forever (documented deferral) (VF-9).", "remediation": "Add a reaper unlinking files + deleting rows where expires_at <= now.", "agent": "vibe-security-auditor"}
+  ]
+}
