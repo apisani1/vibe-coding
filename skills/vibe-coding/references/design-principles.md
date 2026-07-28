@@ -45,6 +45,10 @@ Working notes:
 - For a feature in an existing app: what impact does it have on the overall structure
   of the interface (menus, navigation, organization)?
 - UI mockups or wireframes clarify flows when relevant (text sketches are fine).
+- For a **library**, the interface is the public API: naming, call signatures,
+  defaults, error types, import ergonomics. Sketch the smallest usage example a caller
+  would write — if it reads awkwardly, the API is wrong, not the caller. Treat
+  back-compat of already-exported names as a constraint, not an afterthought.
 
 Working notes:
 - **You're designing for someone else.** What you design must make sense to the user —

@@ -37,7 +37,9 @@ it, who is it for, what problem does it solve, how will it work>
 
 ## Users & user stories
 <ArjanCodes step 2. Happy flows AND alternative flows, as "As a <user>, I … so that …".
-For a feature in an existing app: impact on the overall interface/structure.>
+For a feature in an existing app: impact on the overall interface/structure.
+For a library: the public API surface — smallest usage example a caller would write,
+plus any already-exported names that must stay back-compatible.>
 
 ## Scope
 - In (MVP): <the minimum needed to test whether this is useful>
