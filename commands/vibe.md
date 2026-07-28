@@ -17,6 +17,6 @@ Parse positional args as `<mode> [target] [--ci] [--json] [--auto]`:
 - `--auto` — autopilot (valid for `build` only): vibe-overseer assumes the approver
   role per the skill's Approval boundaries; refuse if vibe-overseer is not installed.
 
-Follow the skill's SKILL.md workflow exactly: read `references/modes.md` for the
-requested mode before acting, respect the run-directory semantics, and enforce the
+Follow the skill's SKILL.md workflow exactly: read the mode runbook it points to for
+the requested mode before acting, respect the run-directory semantics, and enforce the
 approval boundaries (`build` and `env` mutate only after explicit written approval).

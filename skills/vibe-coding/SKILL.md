@@ -2,13 +2,14 @@
 name: vibe-coding
 description: |
   Manage the full lifecycle of building software libraries and applications with AI
-  agents ("vibe coding"): research, agent-environment setup, spec definition, design,
+  agents ("vibe coding"): research, agent- and dev-environment setup, spec definition, design,
   planning, checkpointed implementation — including approved autonomous/autopilot
   runs — verification, and review. Activate whenever the user wants to build, design,
   spec, plan, verify, review, or autonomously drive the building of software — phrases
   like "vibe code", "let's build <thing>", "design this app/library", "write a spec
   for", "plan this feature", "start a new project", "set up my agent environment",
-  "build this autonomously", "run the build and stop if something looks off",
+  "set up my dev environment", "build this autonomously",
+  "run the build and stop if something looks off",
   "verify this build", "review what we built", or "/vibe <mode>" (any mode or flag
   such as --auto). Use it for both greenfield projects and features in existing
   codebases, even if the user doesn't say "vibe coding" explicitly — any non-trivial
@@ -79,7 +80,7 @@ Each mode produces a defined artifact set. Detailed runbooks live in
 | Mode     | Action                                                                                                          | Artifacts (in run dir)                             | Sub-agents                                |
 | -------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------ |
 | `ask`    | Research/investigate/answer only. No run dir, no artifacts, never mutates.                                       | none                                                | none                                       |
-| `env`    | Audit + set up the agent environment (CLAUDE.md / knowledge base). Diff first, write after approval.             | `env-report.md`                                     | none                                       |
+| `env`    | Audit + set up the agent environment (CLAUDE.md / knowledge base) and dev environment (profile assets, tooling config). Diff first, write after approval. | `env-report.md`                                     | none                                       |
 | `define` | Interview → spec (ArjanCodes 1–2). Goal, audience, user stories, MVP scope, acceptance criteria.                 | `spec.md`                                           | none                                       |
 | `design` | Technical design (ArjanCodes 3, 6, 7). Data model, modules, Mermaid, edge cases, ripple effects, limitations.    | `design.md`, `decisions.md`                         | vibe-architect                             |
 | `plan`   | Phased plan (ArjanCodes 4–5). Checkpoints + **verification defined before any code**.                            | `plan.md`, `checklist.md`, `verification-plan.md`   | vibe-test-designer                         |

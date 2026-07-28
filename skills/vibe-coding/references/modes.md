@@ -49,8 +49,10 @@ mode — answer, then return to the pipeline.
 
 ## env
 
-Set up the workshop the agent operates inside: durable context, reusable knowledge,
-explicit safety rules. Artifacts: `env-report.md`, `summary.md`, `state.json`.
+Set up the workshop: the environment the **agent** operates inside (durable context,
+reusable knowledge, explicit safety rules) and the **development** environment the
+project is built with (tooling config and editor/VCS assets seeded from the user
+preference profile). Artifacts: `env-report.md`, `summary.md`, `state.json`.
 Repo writes **only after explicit written approval**.
 
 1. **Audit.** Look for CLAUDE.md/AGENTS.md, README, architecture docs, package
