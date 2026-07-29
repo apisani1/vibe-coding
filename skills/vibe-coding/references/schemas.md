@@ -84,11 +84,12 @@ This is what makes runs chainable and auditable:
   "created_at": "2026-07-09T14:30:00Z",
   "target": "/abs/path/to/repo",
   "greenfield": false,
+  "greenfield_kind": "existing",
   "scope": "photo-dedupe CLI, MVP per spec",
   "upstream_run": "2026-07-09T13-05-11Z",
   "upstream_artifacts": ["design.md", "decisions.md"],
   "subagents_used": ["vibe-test-designer"],
-  "artifacts": ["plan.md", "checklist.md", "verification-plan.md", "summary.md"],
+  "artifacts": ["plan.md", "checklist.md", "verification-plan.md", "summary.md", "state.json"],
   "build": {
     "approvals": ["2026-07-09T15:02:44Z checkpoint-1..2 — 'Yes, implement checkpoints 1 and 2'"],
     "completed_checkpoints": ["1", "2"],
@@ -106,10 +107,25 @@ The `build.auto` object exists only for `--auto` runs: `grant_quote` is the user
 invocation verbatim (it is the written approval of record), and `max_checkpoints`
 comes from `.claude/vibe-coding.local.md` `auto_max_checkpoints` (default 10).
 
-`upstream_run` is the run-dir name consumed (or `null`). The `build` object exists only
-after `build` has run against this dir. When a mode loads its upstream from an explicit
-path rather than `latest`, record that path — the chain must reflect what was actually
-read.
+The `build` object exists only after `build` has run against this dir.
+
+Field notes — these are exact; emitting a near-miss breaks downstream consumers:
+
+| Field             | Rule                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| `target`          | Absolute path, **no trailing slash** (so string comparison across runs is stable).    |
+| `greenfield`      | Boolean. `true` for **both** bare and scaffolded.                                     |
+| `greenfield_kind` | `"bare"` \| `"scaffolded"` \| `"existing"` — the three-way tier `greenfield` flattens. Always emit it; `greenfield` alone cannot distinguish bare from scaffolded, and the two drive different behavior. |
+| `upstream_run`    | The run-dir name consumed, or **`null`** — the JSON literal, never the string `"none"` or `""`. When a mode loads its upstream from an explicit path rather than `latest`, record that path: the chain must reflect what was actually read. |
+| `artifacts`       | **Every** file this run wrote into the run dir, `state.json` and `summary.md` included. It is a manifest of the directory, not a list of the mode's headline outputs. |
+| `profile`         | Optional; emit when a preference profile was consulted: `{"present": bool, "profile_dir": "<abs path>"}`. Omit entirely when it wasn't. |
+| `applied` / `applied_at` / `approval_quote` | **`env` only**, and only once it has actually written to the repo: `true`, the UTC timestamp, and the user's approving message **verbatim** — the approval of record for a repo-mutating mode, the same role `build.auto.grant_quote` plays for autopilot. Absent (or `"applied": false`) while the proposal is still pending. |
+
+Keep `artifacts` and `summary.md`'s Artifacts line in agreement — they describe the same
+set, and a mismatch between them means one of the two is wrong. Likewise, `applied` must
+agree with `summary.md` and with the repo: a `state.json` saying `applied: true` beside a
+`summary.md` saying "proposed, not yet applied" means one of them was never finalized
+(see `modes.md § env` step 5).
 
 ## Sub-agent invocation & return contract
 

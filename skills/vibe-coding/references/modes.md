@@ -71,6 +71,14 @@ Repo writes **only after explicit written approval**.
 4. **Apply only after explicit written approval.** Then record what was written in
    `§ Applied`. Any instructions this mode creates must themselves state the approval
    boundary (the template already does).
+5. **Finalize the run artifacts after applying — not before.** `env` is two-phase
+   (propose → stop → approve → apply), so the `summary.md` and `state.json` written at
+   the end of step 3 describe a *proposal*. Once anything is written to the repo, rewrite
+   both: `summary.md` must list what was actually applied (never leave "proposed, not yet
+   applied" standing, and never let the Next line claim nothing was written), and
+   `state.json` gets `applied`, `applied_at`, `approval_quote` (`schemas.md`). If the
+   user declines, say so explicitly instead — a stale summary that contradicts the repo
+   is worse than either outcome, because the next mode reads it first.
 
 ## define
 
@@ -79,9 +87,11 @@ ArjanCodes steps 1–2 + the spec interview. Artifact: `spec.md` (+ `summary.md`
 
 1. **Ground.** Classify the target per SKILL.md § Greenfield vs. existing codebase, then:
    - Bare greenfield: consult the user preference profile
-     (`scripts/read_profile.py`); fold its tool choices + style into `spec.md`
-     Constraints, and note that `build` (checkpoint 0) or `env` will seed the repo from
-     the profile's assets. Then go to the interview.
+     (`scripts/read_profile.py`). Fold **every** preference it returns into `spec.md`
+     Constraints — the whole `preferences` map plus the `prose` style body, not a
+     cherry-picked subset; a key the profile sets and the spec omits is a defect. Then
+     state that `build` (checkpoint 0) or `env` will seed the repo from the profile's
+     `assets/`. Then go to the interview.
    - Scaffolded greenfield: interview leads, but record the generated infrastructure
      (tool config in `pyproject.toml`, Makefile targets, layout) as spec constraints.
    - Existing codebase: inspect entrypoints, routes, schemas, tests, docs first so
@@ -189,7 +199,7 @@ to run `plan`. Never build without a plan.
      greenfield and a user preference profile exists (`scripts/read_profile.py`,
      `present: true`), propose seeding the repo as the first checkpoint: copy the
      profile's `assets/` and synthesize project files (`pyproject.toml`, etc.) from its
-     frontmatter prefs, following `schemas.md` § User preference profile (verbatim copy;
+     frontmatter prefs, following `schemas.md` § User preference profile (verbatim copy,
      on collision append-merge union files, key-merge structured files with the user's
      values winning, base-and-augment pref-synthesized ones; junk assets skipped;
      add-only — surface anything genuinely unmergeable in the proposal rather than

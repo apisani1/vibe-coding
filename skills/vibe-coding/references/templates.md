@@ -324,20 +324,28 @@ agent-knowledge/
 ## summary.md
 
 Written by every run-dir mode, last. Keep it terse — it is what the next mode (and the
-human) reads first.
+human) reads first. For `env`, "last" means **after** the apply step, not after the
+proposal — rewrite it once anything lands in the repo (`modes.md § env` step 5).
 
 ```markdown
 # Run summary
 
 - Mode: <mode>
-- Target: <repo path> (greenfield | existing)
+- Target: <repo path> (bare greenfield | scaffolded greenfield | existing — matches
+  `state.json` `greenfield_kind`)
 - Scope: <one line>
-- Upstream run consumed: <run-dir name or "none">
-- Sub-agents used: <names or "none available">
-- Artifacts: <list>
+- Upstream run consumed: <run-dir name, or "none">
+- Sub-agents used: <names dispatched | "none — no sub-agent owns this mode" | "none
+  installed — inline fallback used">
+- Artifacts: <every file written to the run dir, matching `state.json` `artifacts`>
 - Findings: <counts by severity, verify/review only>
 - Next: <next pipeline mode + its approval boundary>
 ```
+
+Two traps in this block: *"none"* here is prose for humans — `state.json`'s
+`upstream_run` takes the JSON literal `null`, never the string. And "no sub-agent owns
+this mode" is not "none installed"; `define` has no owning specialist even when all five
+are present, so don't report that as unavailability.
 
 ## preferences.md
 

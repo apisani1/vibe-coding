@@ -324,7 +324,7 @@ interview questions over long surveys.
 | `references/modes.md`               | Before running any mode — per-mode runbook + inline fallbacks        |
 | `references/design-principles.md`   | Writing spec/design/plan content; enforcing build behavior           |
 | `references/templates.md`           | Emitting any artifact — canonical templates                          |
-| `references/schemas.md`             | Building or merging `findings.json` / `state.json`; sub-agent contract |
+| `references/schemas.md`             | Building or merging `findings.json` / `state.json`; sub-agent contract; **applying the user preference profile** (bare greenfield) |
 | `references/python-stack.md`        | Target is a Python project — tooling defaults                        |
 | `references/worked-example.md`      | End-to-end walkthrough (greenfield + existing-codebase variant)      |
 | `references/ci-recipe.md`           | The user asks about CI integration                                   |
