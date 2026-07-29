@@ -130,10 +130,8 @@ Upstream design: <run-dir path>/design.md
 
 ## Phases (optional — for large scope)
 <use when the plan exceeds ~6 checkpoints or spans multiple subsystems; a flat
-checkpoint list stays the default for small work. Phases group checkpoints into
-milestones (ArjanCodes step 5); front-load the riskiest phase. Each phase boundary is
-a verify point and a legitimate re-plan point — later phases may be revised based on
-what earlier phases revealed.>
+checkpoint list stays the default for small work. Rationale and sequencing rules:
+modes.md § plan step 3.>
 
 ### Phase A: <name>
 - Goal: <one line — what is true when this phase is done>
@@ -343,29 +341,6 @@ human) reads first.
 
 ## preferences.md
 
-The user profile's `preferences.md` (lives at `~/.claude/vibe-coding/profile/`, consulted
-for bare greenfield only). Frontmatter carries tool choices; the body is code-style
-philosophy. A complete, ready-to-copy example — with an `assets/` folder — ships at
-`assets/profile-example/`.
-
-```markdown
----
-package_manager: uv
-python_version: "3.12"
-formatter: black
-line_length: 119
-import_sorter: isort
-linter: [flake8, pylint]
-type_checker: mypy
-test_framework: pytest
-src_layout: true
-license: MIT
-editor: vscode
-precommit: true
----
-
-# Style philosophy
-
-<Short, principled prose the agent applies with judgment — e.g. functions over classes,
-separate construction from use, explicit types on public functions, tests pin behavior.>
-```
+Not templated here — a complete, ready-to-copy example ships at
+`assets/profile-example/preferences.md` (with its `assets/` folder). Recognized
+frontmatter keys: `schemas.md` § User preference profile.

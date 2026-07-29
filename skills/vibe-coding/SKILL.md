@@ -54,11 +54,12 @@ When invoked via the slash command `/vibe <mode> [target] [--ci] [--json] [--aut
 parse positional args in that order. The command file is a thin wrapper that activates
 this skill.
 
-**Greenfield vs. existing codebase** — auto-detect by looking at what the source tree
-*contains*, not just whether repo markers exist. Project generators (cookiecutter,
-`uv init`, `npm create`, `cargo new`, in-house scaffolders) produce `.git`,
-`pyproject.toml`/`package.json`, a Makefile, CI files, and a placeholder source tree —
-that is still greenfield. Classify:
+### Greenfield vs. existing codebase
+
+Auto-detect by looking at what the source tree *contains*, not just whether repo
+markers exist. Project generators (cookiecutter, `uv init`, `npm create`, `cargo new`,
+in-house scaffolders) produce `.git`, `pyproject.toml`/`package.json`, a Makefile, CI
+files, and a placeholder source tree — that is still greenfield. Classify:
 
 - **Bare greenfield** — no `.git`, no source tree. Interview leads; repo grounding is
   minimal. There are no repo conventions to detect, so consult the **user preference
@@ -184,26 +185,15 @@ files ship with `model: inherit`, so the session model is the default everywhere
 
 Bare-greenfield repos have no conventions on disk to detect, so the skill consults a
 **user-scoped** preference profile — one place, never copied per repo. Default location
-`~/.claude/vibe-coding/profile/`:
-
-- `preferences.md` — YAML frontmatter (tool choices: `package_manager`, `formatter`,
-  `line_length`, `linter`, `type_checker`, `test_framework`, `src_layout`, `license`, …)
-  plus a prose body of code-style philosophy the agent applies with judgment.
-- `assets/` — literal files (`.vscode/settings.json`, `.editorconfig`, `.gitignore`,
-  `.pre-commit-config.yaml`, …) copied **verbatim** — never re-emitted or paraphrased.
-
-Read it with `scripts/read_profile.py` (schema in `references/schemas.md`). Behavior:
+`~/.claude/vibe-coding/profile/`: `preferences.md` (YAML frontmatter of tool choices +
+a prose body of code-style philosophy) and `assets/` (literal files copied verbatim).
+Read it with `scripts/read_profile.py`.
 
 - **Bare greenfield only.** Scaffolded/existing repos already carry their own conventions;
   the profile never auto-runs there.
 - **`define`** folds the frontmatter tool choices + style into `spec.md` Constraints;
   project-specific files (`pyproject.toml`, …) are **synthesized** from those prefs
   (`references/python-stack.md`), not templated.
-- **Base-and-augment when they overlap.** You may ship a *partial* `pyproject.toml` in
-  `assets/` (just the `[tool.*]` sections) *and* set pyproject-related prefs in
-  frontmatter: the asset is copied as an authoritative **base**, then only the missing
-  spec/pref-derived fields (`[project]` metadata, dependencies) are merged in around your
-  hand-written sections — never overwriting them (`references/schemas.md`).
 - **Two apply paths for the assets** (both write to the repo and are approval-gated):
   (1) **`build` checkpoint 0** proposes seeding a bare repo from the profile before the
   first real checkpoint; (2) **`env`** applies it on demand. Both are **add-only** —
@@ -211,7 +201,9 @@ Read it with `scripts/read_profile.py` (schema in `references/schemas.md`). Beha
 - **Precedence:** repo-local `.claude/vibe-coding.local.md` keys override the profile; the
   profile overrides generic defaults; no profile → today's generic defaults, unchanged.
 
-A ready-to-copy example ships at `assets/profile-example/` (copy to
+Full contract — frontmatter keys, `read_profile.py` output, the verbatim-copy and
+base-and-augment rules: `references/schemas.md` § User preference profile. A
+ready-to-copy example ships at `assets/profile-example/` (copy to
 `~/.claude/vibe-coding/profile/` and edit).
 
 ## findings.json

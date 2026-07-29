@@ -20,11 +20,6 @@ Common to all modes:
   it's missing, **offer to run the missing upstream mode first** — don't silently
   fabricate an upstream.
 
-## Contents
-
-- [ask](#ask) · [env](#env) · [define](#define) · [design](#design) · [plan](#plan) ·
-  [build](#build) · [verify](#verify) · [review](#review)
-
 ---
 
 ## ask
@@ -64,11 +59,10 @@ Repo writes **only after explicit written approval**.
    every session. Propose a knowledge base (`agent-knowledge/`) only when recurring
    context justifies it — a few durable files over many tiny ones. Propose a new skill
    only for a workflow the user demonstrably repeats. **Apply the preference profile**
-   on request (or when a bare repo lacks its assets): read
-   `~/.claude/vibe-coding/profile/` via `scripts/read_profile.py` and propose copying the
-   missing `assets/` verbatim plus synthesizing any missing project files from the
-   frontmatter prefs (base-and-augment where an asset is itself a synthesizable file —
-   see `schemas.md`) — **add-only, never overwrite existing files**.
+   on request (or when a bare repo lacks its assets): read it via
+   `scripts/read_profile.py` and propose copying the missing `assets/` plus synthesizing
+   any missing project files from the frontmatter prefs — per the rules in `schemas.md`
+   § User preference profile (verbatim copy, base-and-augment on overlap, **add-only**).
 3. **Show the diff.** Write the full proposed content into
    `env-report.md § Proposed changes`. Present it and stop.
 4. **Apply only after explicit written approval.** Then record what was written in
@@ -80,19 +74,15 @@ Repo writes **only after explicit written approval**.
 ArjanCodes steps 1–2 + the spec interview. Artifact: `spec.md` (+ `summary.md`,
 `state.json`). Read-only wrt repo code.
 
-1. **Ground.** Classify the target (SKILL.md § Greenfield vs. existing codebase) by
-   inspecting the source tree's *content*, not just repo markers:
-   - Bare greenfield (no `.git`, no source tree): no repo conventions exist, so consult
-     the user preference profile (`scripts/read_profile.py`); fold its tool choices +
-     style into `spec.md` Constraints, and note that `build` (checkpoint 0) or `env`
-     will seed the repo from the profile's assets. Then go to the interview.
-   - Scaffolded greenfield (markers exist, but `src/` holds only generator
-     placeholders — a version-only `__init__.py`, a hello-world entry point, smoke
-     tests that only import the package): interview leads, but record the generated
-     infrastructure (tool config in `pyproject.toml`, Makefile targets, layout) as
-     spec constraints — the scaffolder encodes the user's conventions.
-   - Existing codebase (real domain code present): inspect entrypoints, routes,
-     schemas, tests, docs first so interview questions are informed, not generic.
+1. **Ground.** Classify the target per SKILL.md § Greenfield vs. existing codebase, then:
+   - Bare greenfield: consult the user preference profile
+     (`scripts/read_profile.py`); fold its tool choices + style into `spec.md`
+     Constraints, and note that `build` (checkpoint 0) or `env` will seed the repo from
+     the profile's assets. Then go to the interview.
+   - Scaffolded greenfield: interview leads, but record the generated infrastructure
+     (tool config in `pyproject.toml`, Makefile targets, layout) as spec constraints.
+   - Existing codebase: inspect entrypoints, routes, schemas, tests, docs first so
+     interview questions are informed, not generic.
 2. **Interview for intent.** Identify the real goal — the outcome or decision the work
    enables, not the task wording. High-impact questions, not a survey:
    - "What decision or user outcome should this enable?"
@@ -195,13 +185,10 @@ to run `plan`. Never build without a plan.
    - **Checkpoint 0 — seed from profile (bare greenfield only).** If the target is bare
      greenfield and a user preference profile exists (`scripts/read_profile.py`,
      `present: true`), propose seeding the repo as the first checkpoint: copy the
-     profile's `assets/` **verbatim** and synthesize project files (`pyproject.toml`,
-     etc.) from its frontmatter prefs. If an asset *is* a synthesizable file (e.g. a
-     partial `pyproject.toml`), use base-and-augment — treat the asset as the base and
-     merge in only the missing `[project]`/dependency fields, preserving the user's
-     hand-written sections (`schemas.md` § User preference profile). Approval-gated and
-     logged like any checkpoint; **add-only** — never overwrite a file the user already
-     created. Skip entirely for scaffolded/existing repos.
+     profile's `assets/` and synthesize project files (`pyproject.toml`, etc.) from its
+     frontmatter prefs, following `schemas.md` § User preference profile (verbatim copy,
+     base-and-augment on overlap, **add-only**). Approval-gated and logged like any
+     checkpoint. Skip entirely for scaffolded/existing repos.
 3. **Checkpoint loop**, for each approved checkpoint:
    a. Implement the smallest coherent slice, under the Karpathy rules
       (`design-principles.md`): state assumptions first; simplest code that passes the

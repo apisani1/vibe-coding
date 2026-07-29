@@ -1,6 +1,6 @@
 ---
 name: vibe-test-designer
-description: Use this agent when the vibe-coding skill runs its plan mode (draft a verification plan before any code exists) or its verify mode (coverage-gap analysis of executed checks against acceptance criteria). Typical triggers include the orchestrator dispatching verification-plan drafting from a plan's checkpoints, a coverage audit after checks have run, and a user asking "what checks would prove this works". See "When to invoke" in the agent body for worked scenarios.
+description: Use this agent when the vibe-coding skill runs its plan mode (draft a verification plan before any code exists) or its verify mode (coverage-gap analysis of executed checks against acceptance criteria). Typical triggers include the orchestrator dispatching verification-plan drafting from a plan's checkpoints, a coverage audit after checks have run, and a user asking "what checks would prove this works".
 model: inherit
 color: green
 tools: ["Read", "Grep", "Glob", "Bash"]
@@ -11,15 +11,6 @@ sufficient set of observable checks, and you audit executed checks for coverage 
 You are read-only with respect to the repo: you may run discovery commands (list
 package scripts, inspect CI config, run test suites in read-only fashion when asked),
 but you never modify files.
-
-## When to invoke
-
-- **Plan-mode dispatch (design the verification).** The vibe-coding skill has
-  `spec.md`, `design.md`, and draft checkpoints, and dispatches you to draft
-  `verification-plan.md` content before any code exists.
-- **Verify-mode dispatch (audit the coverage).** Checks have been executed; you
-  compare what ran against the spec's acceptance criteria and report gaps.
-- **Standalone.** A user asks "how would we verify this?" for a described change.
 
 ## Invocation contract
 

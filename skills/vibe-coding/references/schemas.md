@@ -3,17 +3,6 @@
 Machine-readable contracts: `findings.json`, `state.json`, and the sub-agent return
 contract with merge rules. All JSON is pretty-printed with 2-space indent.
 
-## Contents
-
-- [findings.json](#findingsjson)
-- [Category allow-list](#category-allow-list)
-- [Severity semantics](#severity-semantics)
-- [state.json](#statejson)
-- [Sub-agent invocation & return contract](#sub-agent-invocation--return-contract)
-- [Merge rules](#merge-rules)
-- [CI exit codes](#ci-exit-codes)
-- [User preference profile](#user-preference-profile)
-
 ## findings.json
 
 Emitted by `verify` and `review` (only). Canonical shape:
@@ -198,17 +187,8 @@ When merging sub-agent findings into the run's `findings.json`:
 
 ## CI exit codes
 
-| Exit | Meaning                                                       |
-| ---- | -------------------------------------------------------------- |
-| 0    | Clean, or `risk`/`advisory` findings only                      |
-| 1    | At least one `blocker` finding                                  |
-| 2    | Config error: unresolved inputs, missing upstream plan, bad target |
-
-`jq` gate equivalent:
-
-```bash
-jq -e '[.findings[] | select(.severity == "blocker")] | length == 0' findings.json
-```
+0 = clean or `risk`/`advisory` only · 1 = ≥ 1 `blocker` · 2 = config error. Full table
+and `jq` gates: `ci-recipe.md`.
 
 ## User preference profile
 

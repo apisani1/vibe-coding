@@ -5,12 +5,6 @@ and how the agent behaves while building (Karpathy LLM guidelines + agentic loop
 invariants). Load this file when writing spec/design/plan content or enforcing build
 behavior.
 
-## Contents
-
-1. [The ArjanCodes 7 steps](#the-arjancodes-7-steps) — mapped to modes
-2. [Karpathy behavioral guidelines](#karpathy-behavioral-guidelines) — enforced in `build`, audited in `review`
-3. [Agentic-loop invariants](#agentic-loop-invariants) — cross-cutting, all modes
-
 ---
 
 ## The ArjanCodes 7 steps
@@ -211,27 +205,21 @@ than after mistakes.
 
 ## Agentic-loop invariants
 
-Cross-cutting rules from the Karpathy agentic-engineering loop. Every mode obeys them.
+Cross-cutting rules from the Karpathy agentic-engineering loop. Every mode obeys them;
+each is operationalized where noted.
 
-1. **Ground in repo truth before asking questions.** Inspect entrypoints, patterns,
-   tests, package scripts, and docs first. Never ask the user for facts discoverable
-   from the workspace. Ask only for product intent and missing context.
-2. **Interview for intent, not for a survey.** A few high-impact questions. If the user
-   already gave a decision-complete plan, summarize it in one short paragraph and move
-   on — do not re-interview.
+1. **Ground in repo truth before asking questions.** → SKILL.md Workflow step 2;
+   modes.md "Common to all modes".
+2. **Interview for intent, not for a survey.** → modes.md `define` step 2.
 3. **Keep scope reviewable.** Prefer the smallest useful slice over a broad rewrite.
    Name assumptions explicitly in the artifact.
-4. **Verification before implementation.** The checks that will prove the work are
-   written down (`verification-plan.md`) before any code exists. If verification is
-   impossible or incomplete, say so before starting — not after.
+4. **Verification before implementation.** → modes.md `plan` step 4.
 5. **Explicit written approval before mutating work.** Edits, installs, migrations,
    commits, deploys, deletes. Approval must be clear, written, and action-specific:
    "Implement the fix you described" counts; "ok" / "sure" / "sounds good" does not,
    unless it clearly authorizes the concrete mutation. Read-only exploration is always
-   allowed.
-6. **Work in checkpoints.** Smallest coherent slice → inspect the diff → run the
-   slice's checks → report → next slice. Update the user when direction, scope, or
-   risk changes.
-7. **Finish with evidence.** Report what changed, what was verified, what failed, what
-   was not run, and follow-up risks. Never claim completion without running the agreed
-   checks or clearly naming the gap. Do not trust confident output — collect evidence.
+   allowed. → SKILL.md § Approval boundaries.
+6. **Work in checkpoints.** → modes.md `build` step 3.
+7. **Finish with evidence.** Never claim completion without running the agreed checks or
+   clearly naming the gap. Do not trust confident output — collect evidence.
+   → modes.md `build` step 6, `verify` step 3.
