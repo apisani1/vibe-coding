@@ -197,7 +197,11 @@ Read it with `scripts/read_profile.py`.
 - **Two apply paths for the assets** (both write to the repo and are approval-gated):
   (1) **`build` checkpoint 0** proposes seeding a bare repo from the profile before the
   first real checkpoint; (2) **`env`** applies it on demand. Both are **add-only** —
-  never overwrite a file the user already created.
+  never overwrite a file the user already created. On collision, don't discard either:
+  append-merge union files (`.gitignore`, …), key-merge structured ones
+  (`.vscode/settings.json`, … — the user's existing values always win),
+  base-and-augment pref-synthesized ones, and surface anything genuinely unmergeable
+  (`references/schemas.md`).
 - **Precedence:** repo-local `.claude/vibe-coding.local.md` keys override the profile; the
   profile overrides generic defaults; no profile → today's generic defaults, unchanged.
 

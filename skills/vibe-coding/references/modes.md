@@ -62,7 +62,10 @@ Repo writes **only after explicit written approval**.
    on request (or when a bare repo lacks its assets): read it via
    `scripts/read_profile.py` and propose copying the missing `assets/` plus synthesizing
    any missing project files from the frontmatter prefs — per the rules in `schemas.md`
-   § User preference profile (verbatim copy, base-and-augment on overlap, **add-only**).
+   § User preference profile (verbatim copy; on collision: append-merge union files,
+   key-merge structured files with the user's values winning, base-and-augment
+   pref-synthesized ones; junk assets skipped; add-only — and anything genuinely
+   unmergeable is surfaced in the report, never dropped silently).
 3. **Show the diff.** Write the full proposed content into
    `env-report.md § Proposed changes`. Present it and stop.
 4. **Apply only after explicit written approval.** Then record what was written in
@@ -186,9 +189,12 @@ to run `plan`. Never build without a plan.
      greenfield and a user preference profile exists (`scripts/read_profile.py`,
      `present: true`), propose seeding the repo as the first checkpoint: copy the
      profile's `assets/` and synthesize project files (`pyproject.toml`, etc.) from its
-     frontmatter prefs, following `schemas.md` § User preference profile (verbatim copy,
-     base-and-augment on overlap, **add-only**). Approval-gated and logged like any
-     checkpoint. Skip entirely for scaffolded/existing repos.
+     frontmatter prefs, following `schemas.md` § User preference profile (verbatim copy;
+     on collision append-merge union files, key-merge structured files with the user's
+     values winning, base-and-augment pref-synthesized ones; junk assets skipped;
+     add-only — surface anything genuinely unmergeable in the proposal rather than
+     dropping it). Approval-gated and logged like any checkpoint. Skip entirely for
+     scaffolded/existing repos.
 3. **Checkpoint loop**, for each approved checkpoint:
    a. Implement the smallest coherent slice, under the Karpathy rules
       (`design-principles.md`): state assumptions first; simplest code that passes the

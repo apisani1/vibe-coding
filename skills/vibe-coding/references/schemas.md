@@ -245,6 +245,37 @@ Missing profile → `present: false`, empty `preferences`/`assets`; exit 0 alway
   not clobber it. (This is how a partial `pyproject.toml` carrying just `[tool.*]`
   sections combines with prefs that supply the dynamic `[project]` metadata.)
 - **Add-only.** Never overwrite a file the user already created in the target repo (both
-  apply paths: `build` checkpoint 0 and `env`).
+  apply paths: `build` checkpoint 0 and `env`). "Don't overwrite" is not "discard" —
+  when a profile asset collides with an existing file, resolve by file kind:
+  - **Append-mergeable** — line-oriented union files where order doesn't matter and
+    duplicate lines are harmless: `.gitignore`, `.dockerignore`, `.npmrc`,
+    `.env.example`. Keep the user's file, **append only the profile lines it lacks**
+    under a `# --- added by vibe-coding profile ---` marker, and never reorder, rewrite,
+    or delete an existing line. A user's `.gitignore` must not cost them the profile's
+    ignore patterns.
+  - **Pref-synthesized** — a project file the prefs also generate (`pyproject.toml`):
+    base-and-augment, above.
+  - **Key-addressable structured** — JSON / YAML / TOML / INI whose parts have a stable
+    address, either a key (`.vscode/settings.json` settings; `.editorconfig`'s
+    `root`/`[*]` sections) or a list item with a natural identity
+    (`.pre-commit-config.yaml`'s `repos:` entries, addressed by `repo:` URL). Merge
+    **additively**: add only the parts the user's file lacks, and **never overwrite an
+    existing value** — if they set `editor.rulers` to `[72]` and the profile says
+    `[119]`, theirs wins and the profile's is dropped for that key alone; if they
+    already pin a `repo:`, their `rev` and `hooks` stand and the profile's entry for
+    that repo is skipped. Note the merge in the report, itemized by what was added.
+    If a file's parts have no stable address (a bare list of scalars, order-significant
+    content), treat it as unmergeable below rather than guessing.
+  - **Everything else** — the narrow fallback for content that genuinely cannot be
+    merged: binary files, or opaque whole-file formats with no addressable parts. Skip
+    the file, but **surface the un-applied content** in `env-report.md` (or the
+    checkpoint-0 proposal) so the user can merge it by hand. Never drop a profile asset
+    silently. In practice most text assets are union, key-addressable, or
+    pref-synthesized, so this branch should be rare — if you find yourself reaching for
+    it on a text file, re-check the three above first.
+- **Never copy junk assets.** OS/editor cruft that lands in `assets/` by accident —
+  `.DS_Store`, `Thumbs.db`, `desktop.ini`, `*.swp`, `__pycache__/` — is skipped and
+  flagged for deletion from the profile, not copied. "Verbatim" governs the *content*
+  of a real asset, not membership of the asset set.
 - **Precedence:** repo-local `.claude/vibe-coding.local.md` keys > profile > generic
   defaults.
