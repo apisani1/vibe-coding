@@ -189,8 +189,11 @@ Bare-greenfield repos have no conventions on disk to detect, so the skill consul
 a prose body of code-style philosophy) and `assets/` (literal files copied verbatim).
 Read it with `scripts/read_profile.py`.
 
-- **Bare greenfield only.** Scaffolded/existing repos already carry their own conventions;
-  the profile never auto-runs there.
+- **Auto-consulted for bare greenfield only.** Scaffolded/existing repos already carry
+  their own conventions; the profile never auto-runs there. If the user *explicitly* asks
+  for it in such a repo, the halves split: frontmatter tool choices stay
+  bare-greenfield-only (the repo's configured tooling always wins), while missing
+  `assets/` files may be seeded add-only (`references/schemas.md`).
 - **`define`** folds the frontmatter tool choices + style into `spec.md` Constraints;
   project-specific files (`pyproject.toml`, …) are **synthesized** from those prefs
   (`references/python-stack.md`), not templated.

@@ -3,3 +3,6 @@ skills/vibe-coding-workspace/
 notes/
 
 **/.DS_Store
+
+__pycache__/
+*.pyc

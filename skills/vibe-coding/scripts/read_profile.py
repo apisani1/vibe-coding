@@ -2,9 +2,12 @@
 """
 Read the user's vibe-coding preference profile.
 
-The profile is user-scoped (one place, not per repo) and is consulted **only for bare
-greenfield** builds, where the repo has no conventions of its own to detect. Default
-location:
+The profile is user-scoped (one place, not per repo). It is **auto-consulted only for bare
+greenfield** builds, where the repo has no conventions of its own to detect. On an explicit
+user request (e.g. `/vibe env`) the two halves gate differently: the frontmatter tool
+choices stay bare-greenfield-only — they must never override tooling a scaffolded/existing
+repo already configures — while missing `assets/` files may be seeded into any repo,
+add-only. See `references/schemas.md` § User preference profile. Default location:
 
   ~/.claude/vibe-coding/profile/
   ├── preferences.md      # YAML frontmatter (tool choices) + prose body (style philosophy)

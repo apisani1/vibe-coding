@@ -59,7 +59,10 @@ Repo writes **only after explicit written approval**.
    every session. Propose a knowledge base (`agent-knowledge/`) only when recurring
    context justifies it — a few durable files over many tiny ones. Propose a new skill
    only for a workflow the user demonstrably repeats. **Apply the preference profile**
-   on request (or when a bare repo lacks its assets): read it via
+   on explicit request (or automatically when a *bare* repo lacks its assets). In a
+   scaffolded/existing repo an explicit request seeds **missing assets only** — never the
+   frontmatter tool choices, because the repo's own configured tooling wins
+   (`python-stack.md`). Read it via
    `scripts/read_profile.py` and propose copying the missing `assets/` plus synthesizing
    any missing project files from the frontmatter prefs — per the rules in `schemas.md`
    § User preference profile (verbatim copy; on collision: append-merge union files,

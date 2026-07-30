@@ -250,7 +250,23 @@ The prose body (after the closing `---`) is free-form code-style philosophy.
 Missing profile → `present: false`, empty `preferences`/`assets`; exit 0 always.
 
 **Rules the orchestrator enforces:**
-- **Bare greenfield only.** Never consulted for scaffolded/existing repos.
+- **Auto-consulted for bare greenfield only.** A bare repo has no conventions to detect,
+  so the profile supplies them without being asked. Scaffolded and existing repos carry
+  their own conventions, so the profile never fires there *on its own*. The two halves of
+  the profile then gate differently when the user **explicitly asks** for it (e.g.
+  `/vibe env`):
+  - **Frontmatter prefs — bare greenfield only, no exceptions.** Tool choices
+    (`line_length`, `linter`, `formatter`, …) must never override tooling a
+    scaffolded/existing repo already configures: there, the repo's `[tool.*]` config *is*
+    the detected set and it wins (`python-stack.md`). A repo pinning
+    `line-length = 88` keeps 88 even if the profile says 119 — do not "upgrade" it, do not
+    propose doing so.
+  - **Assets — may be seeded in any repo on explicit request.** Copying a missing
+    `.editorconfig` or `.vscode/settings.json` into a scaffolded repo is safe and
+    useful, because the add-only and collision rules below make it non-destructive:
+    nothing is overwritten, union files merge, structured files key-merge with the
+    user's existing values winning. Refusing an explicit request here would be
+    paternalism, not safety. Only fill *gaps*; never restyle what the repo has.
 - **Assets copied verbatim**, never re-emitted or paraphrased. Project-specific files
   (`pyproject.toml`, …) are synthesized from the frontmatter prefs (`python-stack.md`).
 - **Base-and-augment for overlap files.** When a synthesizable project file (e.g.

@@ -75,9 +75,18 @@ inline fallback. With a manual install the command is the bare `/vibe <mode>`.
 
 Per-agent model overrides can be set in the target repo's
 `.claude/vibe-coding.local.md` (YAML frontmatter `models:` map plus
-`auto_max_checkpoints`).
+`auto_max_checkpoints`). For example:
 
-### Preference profile (bare greenfield)
+```
+---
+models:
+  vibe-architect: opus
+  vibe-test-designer: haiku
+auto_max_checkpoints: 10
+---
+```
+
+### Preference profile
 
 When you start a **bare** greenfield project (an empty directory), there are no repo
 conventions for the skill to detect, so it consults a **user-scoped preference profile** —
@@ -86,7 +95,7 @@ set up once, never copied per repo:
 ```
 ~/.claude/vibe-coding/profile/
 ├── preferences.md   # frontmatter (uv, black/119, isort, pytest, mypy, …) + style prose
-└── assets/          # .vscode/settings.json, .editorconfig, .gitignore, … copied verbatim
+└── assets/          # .editorconfig, .gitignore, .pre-commit-config.yaml, .vscode/…
 ```
 
 Bootstrap it by copying the shipped example:
@@ -95,10 +104,25 @@ Bootstrap it by copying the shipped example:
 cp -r skills/vibe-coding/assets/profile-example ~/.claude/vibe-coding/profile
 ```
 
-The profile seeds a new repo two ways, both approval-gated and **add-only** (never
-overwrites your files): automatically as `build`'s first checkpoint, or on demand via
-`/vibe env`. `pyproject.toml` is synthesized from your preferences. Scaffolded and
-existing repos ignore the profile — they already carry their own conventions.
+It is applied two ways, both approval-gated: automatically as `build`'s first checkpoint,
+or on demand via `/vibe env`. Project files like `pyproject.toml` are synthesized from
+your preferences — or, if you add a partial `pyproject.toml` of your own to `assets/`,
+your hand-written `[tool.*]` sections are kept as the base and only the missing
+`[project]` metadata is filled in around them.
+
+**Your files are never overwritten.** Where a profile asset collides with a file you
+already have, it merges rather than clobbering: `.gitignore` gains only the patterns it
+lacks, under a marker comment; JSON/YAML/INI configs gain only the keys they lack and
+**your existing values always win**; anything that can't be merged safely is shown to you
+instead of being dropped. Editor/OS cruft that drifts into `assets/` (`.DS_Store`, …) is
+skipped, not copied.
+
+**Bare vs. scaffolded/existing.** The two halves of the profile are gated differently.
+Tool choices are bare-greenfield-only — a scaffolded repo's generator config *is* the
+detected tooling and the profile never overrides it, so a repo pinning `line-length = 88`
+keeps 88 even though your profile says 119. Assets are more permissive: ask via
+`/vibe env` and it will seed the *missing* ones into any repo, filling gaps only, never
+restyling what the repo already has.
 
 ## Acknowledgments
 
