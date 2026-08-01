@@ -1,6 +1,6 @@
 {
   "name": "vibe-coding",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Full-lifecycle AI-agent software building: research, spec, design, plan, checkpointed build (incl. autopilot), verify, and review.",
   "author": {
     "name": "Antonio Pisani",
