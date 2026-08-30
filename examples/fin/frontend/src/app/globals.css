@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Only what the theme cannot express as a utility class lives here. Colours
+   belong in tailwind.config.ts (see its header); this file sets the page
+   surface so the dark background covers the viewport rather than only the
+   elements that happen to carry a background class. */
+html,
+body {
+  @apply h-full bg-terminal-bg text-terminal-text;
+}
+
+body {
+  font-feature-settings: "tnum" 1; /* Tabular figures: prices must not jitter horizontally as they tick. */
+}
+
+/* Price flash (spec §2). CSS-only by design: the component adds the class and
+   drops it ~500 ms later, and the fade in between costs no React renders — at
+   a 500 ms tick rate, animating this in JavaScript would mean re-rendering the
+   whole watchlist continuously.
+
+   `background-color` and not `background`: the shorthand would also reset the
+   row's own background, and the flash has to sit on top of the selected-row
+   tint rather than erasing it. */
+@keyframes flash-up {
+  from {
+    background-color: rgb(38 166 91 / 0.35); /* theme `up`, #26a65b */
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes flash-down {
+  from {
+    background-color: rgb(229 72 77 / 0.35); /* theme `down`, #e5484d */
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.flash-up {
+  animation: flash-up 500ms ease-out;
+}
+
+.flash-down {
+  animation: flash-down 500ms ease-out;
+}
+
+/* Respect a stated preference for less motion: the colour still appears and
+   still fades with the class, it simply does not animate. */
+@media (prefers-reduced-motion: reduce) {
+  .flash-up,
+  .flash-down {
+    animation: none;
+  }
+
+  .flash-up {
+    background-color: rgb(38 166 91 / 0.25);
+  }
+
+  .flash-down {
+    background-color: rgb(229 72 77 / 0.25);
+  }
+}

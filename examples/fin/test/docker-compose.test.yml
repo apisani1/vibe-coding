@@ -1,0 +1,69 @@
+# The E2E stack: the real image, a throwaway database, and Playwright.
+#
+# Its own project name, and no named volume anywhere. That is deliberate and it
+# is a safety property, not tidiness: `docker compose down -v` on a stack that
+# declared `finally-data` would delete the user's entire portfolio, and a test
+# teardown must never be able to reach production data.
+name: finally-e2e
+
+services:
+  # NOT named `app`. `.app` is an HSTS-preloaded TLD, so Chrome force-upgrades
+  # http://app:8000 to HTTPS and the whole suite dies with
+  # ERR_SSL_PROTOCOL_ERROR — a failure that reads like a broken server rather
+  # than a broken hostname.
+  workstation:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    # A tag of its own: an E2E run must not re-tag the image a user's container
+    # came from.
+    image: finally:e2e
+    environment:
+      # R7. The one line that keeps a test run from billing real credits, and
+      # the reason this file names no environment file at all — the real .env
+      # carries LLM_MOCK=false and a live key.
+      #
+      # The word for that directive is deliberately not written here: GD3
+      # asserts its absence with a plain `grep`, so a comment mentioning it
+      # fails the guard on a file that is correct. A check that cries wolf gets
+      # switched off.
+      LLM_MOCK: 'true'
+      MASSIVE_API_KEY: ''
+      # The app answers only for the hosts it is served under (DNS-rebinding
+      # protection). Playwright reaches it by service name, so that name has to
+      # be on the list — this is why the list is configurable rather than fixed.
+      ALLOWED_HOSTS: 'workstation,localhost,127.0.0.1'
+    tmpfs:
+      # A fresh database per run: every spec starts from the seeded $10,000
+      # state. E2E against a persisted volume is where flaky suites come from.
+      #
+      # uid/gid are load-bearing — the image runs as 10001 and a tmpfs mounted
+      # with default ownership is root-owned, so the app cannot create the
+      # SQLite file and dies on startup.
+      - /app/db:uid=10001,gid=10001,mode=0755
+    healthcheck:
+      # GET, never HEAD: the /api catch-all answers HEAD with a JSON 404.
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2).status == 200 else 1)"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 3s
+
+  playwright:
+    # The tag must match `@playwright/test` in package.json exactly. A mismatch
+    # gives you browsers built for a different runner, and the failure surfaces
+    # as an unrelated protocol error.
+    image: mcr.microsoft.com/playwright:v1.62.1-noble
+    depends_on:
+      workstation:
+        condition: service_healthy
+    working_dir: /work
+    volumes:
+      - .:/work
+    environment:
+      BASE_URL: http://workstation:8000
+      CI: 'true'
+    # `npm ci` against the committed lockfile, then run. `--ipc=host` avoids
+    # Chromium's shared-memory crashes in a container.
+    ipc: host
+    command: sh -c "npm ci --no-audit --no-fund && npx playwright test"

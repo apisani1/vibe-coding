@@ -1,0 +1,5 @@
+# Artifacts of a run, not of the repo.
+node_modules/
+playwright-report/
+test-results/
+screenshots/

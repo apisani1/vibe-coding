@@ -186,4 +186,42 @@ error; no interactive questions asked.
 
 ---
 
+## 8. Large multi-subsystem build from a pre-written spec — `fin`
+*Exercises: `define` given a complete spec up front (interview reduced to clarifying
+questions only), a genuinely multi-subsystem greenfield build (frontend, backend, DB, SSE
+streaming, LLM tool-calling, Docker), and `design`/`plan`/`build` holding non-negotiable
+cross-cutting invariants across many phases.*
+
+**Setup:**
+```bash
+mkdir -p ~/code/fin
+cp examples/fin/SPEC.md ~/code/fin/SPEC.md   # adjust the source path to your clone
+```
+
+**Prompt:**
+```
+/vibe define ~/code/fin
+
+I already have a complete specification for this project at ./SPEC.md — read it
+and use it as the basis for spec.md rather than running the standard greenfield
+interview from scratch; only ask me questions where it's genuinely ambiguous or
+silent. It's a full-stack AI trading workstation: a FastAPI backend and a
+statically-exported Next.js frontend served from one Docker container, SQLite
+persistence, live prices over SSE, and an LLM chat assistant that can execute
+trades and manage the watchlist through the same service functions the UI
+buttons call. Then take me through design, plan, and build.
+```
+
+**Watch for:** `spec.md` faithfully reflects the provided document (goal, architecture,
+API surface, acceptance criteria) instead of re-deriving it from scratch; `design` records
+the cross-cutting invariants as explicit decisions — a service layer with no web-framework
+import, all money movement in one transaction, refused actions reported with their reason
+in both the REST response and the chat transcript, `/api/*` always answering JSON; `plan`
+groups the work into phases (backend/DB, market data & SSE, frontend, LLM integration,
+Docker/deployment) with a verify boundary at each; `build` respects the `frontend/` /
+`backend/` boundary and never lets the assistant bypass the same validation the UI trade
+form goes through.
+
+---
+
 

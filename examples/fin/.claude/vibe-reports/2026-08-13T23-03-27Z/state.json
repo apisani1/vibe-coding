@@ -1,0 +1,16 @@
+{
+  "mode": "design",
+  "created_at": "2026-08-13T23:03:27Z",
+  "target": "/Users/antonio/AI/MyCode/vibe-coding-course/fin",
+  "greenfield": true,
+  "greenfield_kind": "bare",
+  "scope": "FinAlly — AI trading workstation; full-MVP technical design from SPEC.md",
+  "upstream_run": "SPEC.md",
+  "upstream_artifacts": ["SPEC.md"],
+  "subagents_used": ["vibe-architect"],
+  "artifacts": ["design.md", "decisions.md", "summary.md", "state.json"],
+  "profile": {
+    "present": true,
+    "profile_dir": "/Users/antonio/.claude/vibe-coding/profile"
+  }
+}

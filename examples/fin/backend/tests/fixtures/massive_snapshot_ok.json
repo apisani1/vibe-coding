@@ -1,0 +1,9 @@
+{
+  "status": "OK",
+  "count": 3,
+  "tickers": [
+    {"ticker": "AAPL", "lastTrade": {"p": 190.25, "t": 1723600000000}, "day": {"c": 189.90}, "prevDay": {"c": 188.10}},
+    {"ticker": "MSFT", "lastTrade": {"p": 415.60, "t": 1723600000000}, "day": {"c": 414.00}, "prevDay": {"c": 412.75}},
+    {"ticker": "JPM",  "day": {"c": 200.40}, "prevDay": {"c": 199.10}}
+  ]
+}

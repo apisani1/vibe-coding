@@ -1,0 +1,42 @@
+# Everything the image must not contain, in three groups.
+
+# 1. Build outputs and caches — stage 1 produces its own, and a stale local copy
+#    would silently ship instead of the one just built.
+node_modules/
+.next/
+out/
+backend/src/finally_app/static/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# 2. **Databases.** The single most consequential entry here: a `.db` file copied
+#    into the image sits at the volume mount point and shadows it, so the user's
+#    portfolio silently resets on every `docker run`. Check GD1 asserts /app/db is
+#    empty; this is what makes that true.
+db/
+backend/db/
+*.db
+*.db-wal
+*.db-shm
+
+# 3. Secrets and things with no business in a runtime image.
+.env
+.env.*
+!.env.example
+.git/
+.github/
+.claude/
+test/
+planning/
+notes/
+**/*.test.ts
+**/*.test.tsx
+backend/tests/
+.DS_Store

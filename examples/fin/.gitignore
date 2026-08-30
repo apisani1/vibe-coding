@@ -1,0 +1,65 @@
+# Secrets
+# `.env*` rather than a literal `.env`: the copied .env references a `.env.bak-massive`
+# holding an old provider key, and a literal entry would not have matched it.
+.env*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual envs / tooling caches
+.venv/
+.mypy_cache/
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# The built frontend, copied into the package so FastAPI can mount it. Written
+# by the Dockerfile's second stage and by check C1; never committed, because it
+# is `frontend/out/` under another name.
+backend/src/finally_app/static/
+*.tsbuildinfo
+npm-debug.log*
+
+# Playwright
+test/playwright-report/
+test/test-results/
+test/screenshots/
+
+# Runtime database (the volume mount target; the directory itself is tracked).
+# Unanchored on purpose: `db/*.db` matches only the repo-root `db/`, and the
+# README's documented run command (`uv run uvicorn …` from `backend/`) writes
+# `backend/db/finally.db`, which then showed up as untracked. Found by booting
+# the app for check C1, not by reading the rule.
+*.db
+*.db-wal
+*.db-shm
+
+# Agent artifacts
+# `.claude/vibe-reports/` and `vibe-coding.local.md` ARE tracked deliberately —
+# the spec calls this a project built by agents, so the run artifacts are part
+# of the record. Machine-local settings are not.
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store
+*.swp
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace

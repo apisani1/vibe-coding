@@ -1,0 +1,210 @@
+{
+  "mode": "review",
+  "scanned_at": "2026-08-17T09:40:00Z",
+  "subagents_used": [
+    "vibe-code-reviewer",
+    "vibe-security-auditor"
+  ],
+  "findings": [
+    {
+      "category": "correctness",
+      "severity": "blocker",
+      "file": "backend/src/finally_app/services/chat.py",
+      "line": 278,
+      "checkpoint": "9",
+      "message": "handle_message is `async def` and runs every blocking sqlite3 operation directly on the event loop. This is the failure D21 exists to prevent, and api/chat.py's docstring asserts the opposite. Measured twice, independently: a chat turn with a 1s stall fired 0 of ~208 expected loop beats; the same work through the `def` trade handler fired 162 of ~203. Every SSE stream, the price producer and the snapshotter stop for the duration, and BEGIN IMMEDIATE's 5s busy_timeout means contention with a manual trade can freeze the process for five seconds.",
+      "remediation": "Wrap the four blocking calls in asyncio.to_thread, as snapshots.run_snapshotter and main.lifespan already do. Add a check that counts loop beats across a turn \u2014 nothing else can fail on this.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "correctness",
+      "severity": "blocker",
+      "file": "backend/src/finally_app/llm/mock.py",
+      "line": 42,
+      "checkpoint": "9",
+      "message": "`buy 0 AAPL` under LLM_MOCK=true returns HTTP 500 \u2014 reproduced end to end. The user's turn is already persisted, so it is orphaned in the transcript and fed into every later prompt. LLM_MOCK=true is the mode the E2E suite, the screenshots and the documented dev loop all use. The test named after this value passes because it builds the action with model_construct and monkeypatches mock.respond away: the seventh check in this run that cannot fail.",
+      "remediation": "Clamp the parsed quantity in the mock, and wrap the mock branch in the try the live path already has. Test the real mock.respond('buy 0 AAPL').",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "correctness",
+      "severity": "risk",
+      "file": "backend/src/finally_app/services/portfolio.py",
+      "line": 314,
+      "checkpoint": "6",
+      "message": "get_portfolio reads cash and positions as two autocommit statements, so a trade committing between them returns a total_value that never existed (reproduced: 8,100.00 where the truth was 10,000.00). record_snapshot twenty lines above closes this exact hazard with a transaction. It also feeds chat.render_context.",
+      "remediation": "Add a read_transaction() helper issuing a plain BEGIN and use it in get_portfolio.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "correctness",
+      "severity": "risk",
+      "file": "backend/src/finally_app/services/portfolio.py",
+      "line": 416,
+      "checkpoint": "9",
+      "message": "execute_trade never validates `side` \u2014 the one field whose only guard is a Literal in the Pydantic models the assistant does not construct. _settle has a buy branch and an else, so any other value executes as a sell. Unreachable today, identical in shape to the quantity: -5 defect that already shipped once.",
+      "remediation": "Reject a side outside ('buy','sell') in execute_trade, and drive one through chat._execute_trade in the D5 property test.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "security",
+      "severity": "risk",
+      "file": "backend/src/finally_app/market/massive.py",
+      "line": 128,
+      "checkpoint": "4b",
+      "message": "MASSIVE_API_KEY travels as a URL query parameter and the failure handler logs the raw httpx exception, whose message embeds the full URL including the key. Dormant today (the key is empty) but it would put a plaintext credential into `docker logs finally`.",
+      "remediation": "Log the exception type and status code, or move the key into an Authorization header.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "risk",
+      "file": "backend/src/finally_app/main.py",
+      "line": 216,
+      "checkpoint": "1",
+      "message": "No Host-header validation: Host: evil.example.com returns 200 (verified independently). DNS rebinding makes an attacker page same-origin, so the correct absence of CORS provides no protection. Reads the portfolio and full transcript, executes trades, and can drive /api/chat in a loop at real cost.",
+      "remediation": "TrustedHostMiddleware with localhost/127.0.0.1/[::1] plus the E2E service name.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "risk",
+      "file": "scripts/start_mac.sh",
+      "line": 54,
+      "checkpoint": "15",
+      "message": "--publish binds 0.0.0.0 (verified against the running container), so a no-auth app is LAN-reachable by default, and restart: unless-stopped brings it back after reboot.",
+      "remediation": "Publish 127.0.0.1:${PORT}:8000 in both start scripts and the compose file.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "backend/src/finally_app/api/chat.py",
+      "line": 37,
+      "checkpoint": "9",
+      "message": "No rate limit on /api/chat; each request is one billed completion. A non-issue on true localhost, the financial loss vector the moment either network risk applies.",
+      "remediation": "A small in-process token bucket.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "backend/src/finally_app/main.py",
+      "line": 223,
+      "checkpoint": "1",
+      "message": "The shipped image serves /docs, /redoc and /openapi.json; /docs loads Swagger UI from a CDN on a floating tag with no SRI, in an origin that requires no authentication.",
+      "remediation": "Disable them in the shipped configuration or pin the asset URLs.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "backend/src/finally_app/config.py",
+      "line": 72,
+      "checkpoint": "4b",
+      "message": "MASSIVE_POLL_SECONDS is validated only as a float. Measured: 0 and -5 give a hot loop against a paid API; inf freezes prices forever with no error; nan drops the producer into its restart loop.",
+      "remediation": "Reject non-finite and floor at 2.0, warning when raising.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "security",
+      "severity": "advisory",
+      "file": "backend/src/finally_app/llm/client.py",
+      "line": 135,
+      "checkpoint": "2",
+      "message": "A third-party exception's text is interpolated into the 503 detail and rendered in the chat panel. No key reaches it today, but the string's shape is not under this repo's control.",
+      "remediation": "Return a fixed sentence; keep the exception in the existing logger.exception call.",
+      "agent": "vibe-security-auditor"
+    },
+    {
+      "category": "simplicity",
+      "severity": "advisory",
+      "file": "backend/src/finally_app/llm/spike.py",
+      "line": 1,
+      "checkpoint": "2",
+      "message": "The CP2 one-shot spike ships in the runtime image \u2014 verification tooling with a billable live-call entry point that the static gates must keep green forever.",
+      "remediation": "Move to backend/scripts/spike.py and update check A5.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "simplicity",
+      "severity": "advisory",
+      "file": "frontend/src/hooks/useChat.ts",
+      "line": 124,
+      "checkpoint": "14",
+      "message": "Three pieces of unused API surface: useChat.reload, usePortfolio.loading, getHistory's optional limit.",
+      "remediation": "Drop them, or state why the contract keeps them.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "correctness",
+      "severity": "advisory",
+      "file": "backend/src/finally_app/db/init.py",
+      "line": 61,
+      "checkpoint": "3",
+      "message": "executescript issues an implicit COMMIT, so ensure_initialized's BEGIN IMMEDIATE is gone before the DDL runs and _seed executes in autocommit \u2014 the helper reads as atomic and is not. Harmless today because the DDL is IF NOT EXISTS and the seed is INSERT OR IGNORE.",
+      "remediation": "Drop the wrapper and document idempotence, or split the script.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "correctness",
+      "severity": "advisory",
+      "file": "backend/src/finally_app/services/portfolio.py",
+      "line": 245,
+      "checkpoint": "6",
+      "message": "A dust-quantity buy writes a row to the immutable trade log while the position is deleted \u2014 a fill with no counterpart and no cash movement.",
+      "remediation": "Reject a buy whose resulting position would be dust, before anything is written.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "correctness",
+      "severity": "advisory",
+      "file": "backend/src/finally_app/services/chat.py",
+      "line": 279,
+      "checkpoint": "9",
+      "message": "The user's turn is persisted before the model is called, so a 503 leaves a user row with no assistant reply \u2014 permanent, and fed back into every later prompt. With an unset key, which the README calls a working demo, every message accumulates as an unanswered bubble.",
+      "remediation": "Record an assistant row carrying the reason, or persist only after success. State the choice in the docstring.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "docs",
+      "severity": "advisory",
+      "file": "README.md",
+      "line": 43,
+      "checkpoint": "17",
+      "message": "D18's stated consequence is that the README must list the routes, marking the one D18 added. There is no endpoint table anywhere outside planning/.",
+      "remediation": "Add the endpoint table.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "simplicity",
+      "severity": "advisory",
+      "file": "backend/src/finally_app/market/producer.py",
+      "line": 34,
+      "checkpoint": "4",
+      "message": "read_universe hard-codes the 'default' user id instead of importing DEFAULT_USER_ID.",
+      "remediation": "Import and default to DEFAULT_USER_ID.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "simplicity",
+      "severity": "advisory",
+      "file": "backend/src/finally_app/market/massive.py",
+      "line": 103,
+      "checkpoint": "4b",
+      "message": "Production builds a fresh httpx.AsyncClient \u2014 new pool, new TLS handshake \u2014 on every poll, because the injection seam is only used by tests.",
+      "remediation": "Create it once and close it from the lifespan, or record the judgement.",
+      "agent": "vibe-code-reviewer"
+    },
+    {
+      "category": "dependency",
+      "severity": "advisory",
+      "file": "backend/pyproject.toml",
+      "line": 13,
+      "checkpoint": "2",
+      "message": "litellm brings ~60 transitive packages into the runtime image for one POST to one endpoint. No outstanding advisories in the locked tree and uv lock --check reports no drift.",
+      "remediation": "Optional: a direct httpx POST would drop ~60 packages.",
+      "agent": "vibe-security-auditor"
+    }
+  ]
+}

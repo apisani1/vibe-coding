@@ -1,0 +1,41 @@
+# A convenience wrapper around exactly what the start scripts do.
+#
+# Not the primary interface — the spec's is a start script — but `docker compose
+# up` is what most people try first, and having it agree with the scripts is
+# cheaper than explaining that it does not.
+
+services:
+  finally:
+    build: .
+    image: finally:latest
+    container_name: finally
+    ports:
+      # Loopback, deliberately: published as 0.0.0.0 this app — which has no
+      # login by design — is reachable from the whole LAN, and `restart:
+      # unless-stopped` below brings that back after every reboot.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Named, not bind-mounted: the portfolio has to survive `docker rm`, and a
+      # bind mount would also drag the host's file ownership into a container
+      # that runs as uid 10001.
+      - finally-data:/app/db
+    env_file:
+      # Optional on purpose. Without it the app runs the simulator and answers
+      # 503 on chat, which is a working demo rather than a failure — and a
+      # missing .env must not stop the container from starting.
+      - path: .env
+        required: false
+    restart: unless-stopped
+
+volumes:
+  finally-data:
+    # Named here as well as in the scripts, and the two must stay the same
+    # string: `stop` never removes it, so a renamed volume is a portfolio the
+    # user cannot see any more.
+    #
+    # ⚠️  `docker compose down -v` DELETES THIS VOLUME — your entire portfolio.
+    #     The stop scripts deliberately cannot do that; this file can, because
+    #     the volume is project-managed and `-v` is Docker's documented way to
+    #     remove project volumes. Use `docker compose down` (no flag) to stop.
+    #     To erase deliberately: `docker volume rm finally-data`.
+    name: finally-data

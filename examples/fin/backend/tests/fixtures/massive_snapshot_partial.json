@@ -1,0 +1,12 @@
+{
+  "status": "OK",
+  "count": 4,
+  "tickers": [
+    {"ticker": "AAPL", "lastTrade": {"p": 190.25}},
+    {"ticker": "BROKEN", "lastTrade": {"p": "not-a-number"}},
+    {"ticker": "NOPRICE"},
+    "this-entry-is-not-even-an-object",
+    {"lastTrade": {"p": 12.0}},
+    {"ticker": "NVDA", "prevDay": {"c": 880.10}}
+  ]
+}

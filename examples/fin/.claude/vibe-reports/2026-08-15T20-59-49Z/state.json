@@ -1,0 +1,44 @@
+{
+  "mode": "verify",
+  "created_at": "2026-08-15T20:59:49Z",
+  "target": "/Users/antonio/AI/MyCode/vibe-coding-course/fin",
+  "upstream_run": ".claude/vibe-reports/2026-08-13T23-18-51Z",
+  "gate": "B",
+  "verdict": "pass",
+  "checks": {
+    "passed": [
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "A7-regression",
+      "static-gates"
+    ],
+    "failed": [],
+    "not_run": [
+      "A5 (billable live LLM call, already spent at CP2)",
+      "live boot smoke (superseded)"
+    ]
+  },
+  "evidence": {
+    "tests": 226,
+    "tests_with_keys_unset": 226,
+    "tests_with_network_blocked": 226,
+    "b7_positive_control": "socket.create_connection to example.com fails under the harness",
+    "b7_harness_author": "vibe-overseer (independent of the code author)",
+    "mypy_files": 31,
+    "pylint": "10.00/10",
+    "commits": 44
+  },
+  "findings": {
+    "blocker": 0,
+    "risk": 0,
+    "advisory": 0
+  },
+  "subagents_used": [],
+  "next_mode": "build",
+  "next_mode_note": "Phase C (CP10-14). latest now points at this verify dir, so build needs the explicit plan path .claude/vibe-reports/2026-08-13T23-18-51Z"
+}

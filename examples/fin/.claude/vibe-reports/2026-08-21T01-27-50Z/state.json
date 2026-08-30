@@ -1,0 +1,52 @@
+{
+  "mode": "verify",
+  "created_at": "2026-08-21T01:27:50Z",
+  "target": "/Users/antonio/AI/MyCode/vibe-coding-course/fin",
+  "upstream_run": "2026-08-13T23-18-51Z",
+  "upstream_artifacts": [
+    "plan.md",
+    "checklist.md",
+    "verification-plan.md",
+    "build-log.md"
+  ],
+  "also_consumed": "2026-08-17T08-59-28Z (review — all 20 findings now dispositioned)",
+  "subagents_used": [],
+  "artifacts": [
+    "verify-report.md",
+    "findings.json",
+    "summary.md",
+    "state.json"
+  ],
+  "result": "pass",
+  "counts": {
+    "blocker": 0,
+    "risk": 0,
+    "advisory": 4
+  },
+  "gates": {
+    "A": "pass",
+    "B": "pass",
+    "C": "pass",
+    "D": "pass — GD3 green for the first time since 2026-08-16, and only with a forced image rebuild"
+  },
+  "review_findings_disposition": {
+    "blocker": "2 of 2 fixed at CP18",
+    "risk": "5 of 5 fixed at CP18",
+    "advisory": "12 of 13 fixed at CP19; 1 (litellm) kept and ratified as D26"
+  },
+  "corrections_recorded": [
+    "CP18's build-log claim of '21 E2E specs still green from a cold compose' is RETRACTED — the image predated CP18. Cold compose was true of the containers and false of the image.",
+    "The Gate D re-run at 2026-08-17T04-53-00Z carries the same defect, though CP17 was documentation and a Makefile target."
+  ],
+  "open_conditions": [
+    "RESOLVED at CP20 (dad9e19): `make e2e` now runs `docker compose up --build`; GD8 pins it with a mutation run in both directions.",
+    "RESOLVED at CP21 (88553ab, approved on the third pass): the README documents the stale-image trap and the stop-then-rebuild recipe; GD9 pins the recipe, the variable count, and the reset note.",
+    "OPEN, needs the human: the early-exit branch in start_mac.sh:34-37 / start_windows.ps1:24-27 should say that `--build` rebuilt an image the running container is not using. This CLOSES the trap; CP21 only documented it. Discoverability, not prevention.",
+    "litellm kept by ratified decision D26 — a standing dependency-audit entry, not a defect.",
+    "Unverifiable, unchanged: the Massive live path, a mid-session SSE cut, and whether the UI looks good.",
+    "The cash guard admits an overspend of up to 1e-9 dollars via DUST_TOLERANCE slack."
+  ],
+  "live_llm_calls_this_run": 0,
+  "next": "No pipeline mode is outstanding. The build is complete and verified; the two open items are human decisions.",
+  "superseded_by": "CP20 (dad9e19) and CP21 (88553ab) closed both advisories this run raised. One new advisory was found in the process — the start scripts' early exit — and is open."
+}

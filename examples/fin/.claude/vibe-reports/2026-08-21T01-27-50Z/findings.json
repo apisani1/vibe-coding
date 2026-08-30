@@ -1,0 +1,50 @@
+{
+  "mode": "verify",
+  "scanned_at": "2026-08-21T02:20:00Z",
+  "subagents_used": [],
+  "findings": [
+    {
+      "category": "tests",
+      "severity": "advisory",
+      "file": "Makefile",
+      "line": 33,
+      "checkpoint": "19",
+      "message": "`make e2e` runs `docker compose up` without `--build`. Compose builds only when the image is missing, so once `finally:e2e` exists the suite silently drives a stale image. This produced a passing 21-spec run tonight against an image built 2026-08-16 that contained neither CP18 nor CP19 (grep inside it: 0 TrustedHostMiddleware, 0 chat_limiter, 0 'allowed hosts'). It also means CP18's recorded claim of '21 E2E specs still green from a cold compose' was never earned; it is retracted in build-log.md. Caught only because one startup log line was missing from the container output. RESOLVED at CP20 (dad9e19): the recipe now uses `up --build`, and GD8 pins it with a mutation run in both directions.",
+      "remediation": "Change the recipe to `docker compose -f docker-compose.test.yml up --build`. Needs a human: the Makefile is not in CP19's Touches list, CP19 is approved and closed, and max_checkpoints: 19 is spent.",
+      "agent": "vibe-coding",
+      "outcome": "fixed"
+    },
+    {
+      "category": "dependency",
+      "severity": "advisory",
+      "file": "backend/pyproject.toml",
+      "line": 13,
+      "checkpoint": "19",
+      "message": "litellm brings ~60 transitive packages into the runtime image for one POST to one OpenAI-compatible endpoint. Kept deliberately and ratified by the human as D26: the run's single live LLM call was spent at CP2 and build-log.md recorded the response content rather than the HTTP envelope, so a hand-rolled replacement could only be tested against an envelope written from memory. No outstanding advisories in the locked tree; `uv lock --check` reports no drift. Not an open defect: a ratified decision (D26).",
+      "remediation": "Revisit when a live call is affordable. The interface (`complete(settings, messages) -> AssistantResponse`) is narrow enough that the swap is a one-file change; D25's two envelope guards are what would have to be reproduced.",
+      "agent": "vibe-coding",
+      "outcome": "no_change_needed"
+    },
+    {
+      "category": "docs",
+      "severity": "advisory",
+      "file": "README.md",
+      "line": 17,
+      "checkpoint": "20",
+      "message": "The Quickstart shows `./scripts/start_mac.sh` bare. The script builds only when the image is missing, so after a `git pull` it silently starts the previous build \u2014 which is exactly what put a pre-CP18 image in front of the user on 2026-08-20. Same shape as the `make e2e` defect but with a worse failure mode: serving stale code rather than testing it. RESOLVED at CP21 (88553ab), after two rejections: the first remedy did not work, and the fix for it deleted a plan-mandated section. GD9 now pins the recipe and the reset note.",
+      "remediation": "One README line: after a `git pull`, run `./scripts/start_mac.sh --build`. Left for the human as its own change rather than folded into CP20, which does not list README.md in its Touches.",
+      "agent": "vibe-overseer",
+      "outcome": "fixed"
+    },
+    {
+      "category": "correctness",
+      "severity": "advisory",
+      "file": "scripts/start_mac.sh",
+      "line": 34,
+      "checkpoint": "21",
+      "message": "The early-exit branch fires AFTER the build, so `--build` on a running container rebuilds the image, prints 'FinAlly is already running', exits 0, and keeps serving the old container. CP21 documented this; it does not prevent it. `start_windows.ps1:24-27` has the same ordering.",
+      "remediation": "Make the branch say that the new image is not what is being served and that a stop/start is required. Needs the human: it is a code change to the script that starts a live container, and it was outside CP21's Touches.",
+      "agent": "vibe-overseer"
+    }
+  ]
+}
