@@ -78,48 +78,60 @@ files, and a placeholder source tree — that is still greenfield. Classify:
 Each mode produces a defined artifact set. Detailed runbooks live in
 `references/modes.md` — **read that file before executing any mode**.
 
-| Mode     | Action                                                                                                          | Artifacts (in run dir)                             | Sub-agents                                |
+| Mode     | Action                                                                                                          | Artifacts                                           | Sub-agents                                |
 | -------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------ |
 | `ask`    | Research/investigate/answer only. No run dir, no artifacts, never mutates.                                       | none                                                | none                                       |
-| `env`    | Audit + set up the agent environment (CLAUDE.md / knowledge base) and dev environment (profile assets, tooling config). Diff first, write after approval. | `env-report.md`                                     | none                                       |
-| `define` | Interview → spec (ArjanCodes 1–2). Goal, audience, user stories, MVP scope, acceptance criteria.                 | `spec.md`                                           | none                                       |
-| `design` | Technical design (ArjanCodes 3, 6, 7). Data model, modules, Mermaid, edge cases, ripple effects, limitations.    | `design.md`, `decisions.md`                         | vibe-architect                             |
-| `plan`   | Phased plan (ArjanCodes 4–5). Checkpoints + **verification defined before any code**.                            | `plan.md`, `checklist.md`, `verification-plan.md`   | vibe-test-designer                         |
-| `build`  | Execute `latest/plan.md` in checkpoints with human approval. **Operates in place** on `latest`; no new run dir.  | Updates `checklist.md`, appends `build-log.md`      | vibe-overseer (`--auto` only)              |
-| `verify` | Run `verification-plan.md`; report Passed / Failed / Not-run honestly.                                           | `verify-report.md`, `findings.json`                 | vibe-test-designer, vibe-security-auditor  |
-| `review` | Code review of what was built: correctness, surgical-diff audit, simplicity, security.                           | `review.md`, `findings.json`                        | vibe-code-reviewer, vibe-security-auditor  |
+| `env`    | Audit + set up the agent environment (CLAUDE.md / knowledge base) and dev environment (profile assets, tooling config). Diff first, write after approval. | run dir: `env-report.md`                            | none                                       |
+| `define` | Interview → spec (ArjanCodes 1–2). Goal, audience, user stories, MVP scope, acceptance criteria.                 | `vibe/spec.md`                                      | none                                       |
+| `design` | Technical design (ArjanCodes 3, 6, 7). Data model, modules, Mermaid, edge cases, ripple effects, limitations.    | `vibe/design.md`, `vibe/decisions.md`               | vibe-architect                             |
+| `plan`   | Phased plan (ArjanCodes 4–5). Checkpoints + **verification defined before any code**.                            | `vibe/plan.md`, `checklist.md`, `verification-plan.md` | vibe-test-designer                      |
+| `build`  | Execute `vibe/plan.md` in checkpoints with human approval. **No run dir.**                                       | Ticks `vibe/checklist.md`, appends `vibe/build-log.md` | vibe-overseer (`--auto` only)           |
+| `verify` | Run `vibe/verification-plan.md`; report Passed / Failed / Not-run honestly.                                      | run dir: `verify-report.md`, `findings.json`        | vibe-test-designer, vibe-security-auditor  |
+| `review` | Code review of what was built: correctness, surgical-diff audit, simplicity, security.                           | run dir: `review.md`, `findings.json`               | vibe-code-reviewer, vibe-security-auditor  |
 
-All run-dir modes also write `summary.md` and `state.json` (mode, inputs, upstream run
-consumed — schema in `references/schemas.md`).
+All run-dir modes also write `summary.md` and `state.json` into their run dir (mode,
+inputs, upstream consumed — schema in `references/schemas.md`), and every mode except
+`ask` refreshes `vibe/STATUS.md` and `vibe/state.json`.
 
 **Pipeline.** The soft pipeline is `define → design → plan → build → verify → review`.
-Each mode loads its upstream artifact from `latest` (or an explicit run-dir path the
-user provides) and, if it is missing, offers to run the missing upstream mode first
+Each mode loads its upstream doc from `vibe/` (e.g. `design` reads `vibe/spec.md`) and,
+if it is missing, offers to run the missing upstream mode first
 (e.g. `design` with no spec offers to run `define`). `ask` and `env` are entry points
 usable at any time. `verify` failures route back to `build` as the next checkpoint;
 `review` blockers route back to `plan` or `build`. Large plans group checkpoints into
 **phases** (milestones); `verify` runs at each phase boundary, and later phases may be
 re-planned from what earlier phases revealed.
 
-### Run-directory semantics
+### Artifact layout
 
-All artifacts live under `.claude/vibe-reports/` in the target repo. Modes that produce
-a fresh run (`env`, `define`, `design`, `plan`, `verify`, `review`) create a new
-`<UTC-timestamp>/` directory (`YYYY-MM-DDTHH-MM-SSZ`) and update the pointer file
-`.claude/vibe-reports/latest` to contain that directory's name. Use a pointer file,
-**not a symlink** — Windows.
+All artifacts live under `vibe/` at the target repo root — never under `.claude/`
+(headless sessions cannot write there). Two kinds:
 
-`build` is the exception: it operates **in place** on the directory that `latest`
-currently points to, so the plan being executed is never orphaned by pointer
-advancement. It does not advance `latest`. If `latest/plan.md` or `latest/checklist.md`
-is missing, `build` fails fast. `ask` writes nothing anywhere.
+- **Current docs at stable paths** — the plan of record: `vibe/spec.md`, `design.md`,
+  `decisions.md`, `plan.md`, `checklist.md`, `verification-plan.md`, `build-log.md`,
+  plus `vibe/STATUS.md` (human view: stage, blockers, next mode) and `vibe/state.json`
+  (machine view, incl. build progress). `define`/`design`/`plan` write these; before
+  replacing an existing doc they snapshot it into their run dir's `prior/`.
+- **Run history** — one immutable `vibe/runs/<UTC-ts>-<mode>/` per run-dir mode
+  (`env`, `define`, `design`, `plan`, `verify`, `review`): `summary.md`, `state.json`,
+  the mode's reports (`verify-report.md`, `review.md`, `env-report.md`,
+  `findings.json`), and `prior/` snapshots. A session spanning several modes uses one run
+  dir (`<ts>-define+design`).
 
-Implication: once `verify` runs after `build`, `latest` advances away from the plan
-directory. To resume `build` against the original plan, pass the explicit run-dir path.
-Mention this in user-facing help when relevant.
+`build` has no run dir: it ticks `vibe/checklist.md`, appends `vibe/build-log.md`, and
+updates the `build` object in `vibe/state.json`; if `vibe/plan.md` or
+`vibe/checklist.md` is missing it fails fast. `ask` writes nothing anywhere.
 
-Use `scripts/new_run_dir.py --repo <target> --mode <mode>` to create the run directory
-and update the pointer atomically (it refuses `ask` and `build`). Use
+`vibe/` is meant to be committed. Never add it to `.gitignore` and never edit an
+existing `.gitignore` for it; if `git check-ignore -q vibe/` matches, say so in
+`STATUS.md` and the end-of-run summary instead.
+
+Use `scripts/new_run_dir.py --repo <target> --mode <mode> [--snapshot <doc>...]` to
+create the run dir and snapshot docs about to be replaced (it refuses `ask` and
+`build`; repeat `--mode` for a multi-mode run). Run each helper script as its **own
+Bash call** — never chained with `&&`/`;` to other commands (permission rules match
+whole commands). If a script can't run, say so in the end-of-run summary and
+`STATUS.md`; **never invent a timestamp** or hand-create a run dir in its place. Use
 `scripts/probe_subagents.py --repo <target>` to check which specialist sub-agents are
 installed. Use `scripts/read_profile.py` to read the user's preference profile (see
 § User preference profile) — for bare-greenfield work only.
@@ -127,7 +139,7 @@ installed. Use `scripts/read_profile.py` to read the user's preference profile (
 ## Approval boundaries (safety-critical)
 
 - `ask`, `define`, `design`, `plan`, `verify`, `review` are **read-only with respect to
-  repo code**: they write only inside their own run dir. `verify` and `review` may run
+  repo code**: they write only under `vibe/`. `verify` and `review` may run
   the project's existing checks (tests, linters, builds); ask first before any check
   that mutates state (migrations, deploys, installs).
 - `env` proposes a CLAUDE.md / knowledge-base diff and writes it **only after explicit
@@ -256,11 +268,13 @@ Every invocation follows the same shape:
    patterns, tests, package scripts, docs. Never ask the user for facts discoverable
    from the workspace.
 3. **Probe sub-agents** (`scripts/probe_subagents.py`); record availability.
-4. **Create the run directory** (`scripts/new_run_dir.py`) — except for `ask` (writes
-   nothing) and `build` (operates in place on `latest`).
+4. **Create the run directory** (`scripts/new_run_dir.py`, with `--snapshot` for any
+   current doc the mode will replace) — except for `ask` (writes nothing) and `build`
+   (updates the current docs in place).
 5. **Act per mode.** Read the runbook in `references/modes.md`. Load the mode's
    templates from `references/templates.md`.
-6. **Emit artifacts** to the run dir. Pretty-print `findings.json` (2-space indent).
+6. **Emit artifacts**: current docs to `vibe/`, reports to the run dir; then refresh
+   `vibe/STATUS.md` and `vibe/state.json`. Pretty-print JSON (2-space indent).
 7. **Print a terse end-of-run summary**: mode, target, run directory, key artifacts,
    counts by severity (verify/review), sub-agents used, and — always — **the next mode
    in the pipeline and its approval boundary**. With `--json`, also stream
@@ -295,8 +309,8 @@ Or trust the exit code (0 clean, 1 blockers, 2 config error).
 
 - "Let's build a CLI tool that dedupes my photo library" → `define` (greenfield)
 - "Write a spec for adding OAuth to this API" → `define` (existing codebase)
-- "Design it" (after a define run) → `design`, loading `latest/spec.md`
-- "Plan the work" → `plan`, loading `latest/design.md`
+- "Design it" (after a define run) → `design`, loading `vibe/spec.md`
+- "Plan the work" → `plan`, loading `vibe/design.md`
 - "Start building" / "implement checkpoint 1" → `build` (approval gate first)
 - "Did it work?" / "verify the build" → `verify`
 - "Review what we built" → `review`

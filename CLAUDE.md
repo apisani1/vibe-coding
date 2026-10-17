@@ -61,8 +61,9 @@ skills/vibe-coding-workspace/   # eval/dev workspace — gitignored, not shipped
 
 - Reference docs use progressive disclosure: keep `SKILL.md` lean and push detail into
   `references/*.md`. Match the existing terse, imperative style.
-- Runtime artifacts the skill produces always live under the **target** repo's
-  `.claude/vibe-reports/<UTC-timestamp>/`, never in this repo or the user's home.
+- Runtime artifacts the skill produces always live under the **target** repo's `vibe/`
+  (current docs at stable paths + `vibe/runs/<UTC-ts>-<mode>/` history), never under
+  `.claude/` (headless sessions can't write there), in this repo, or the user's home.
 
 ## Sources
 

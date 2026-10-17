@@ -12,7 +12,7 @@ directory → greenfield.
 
 ```bash
 python3 scripts/new_run_dir.py --repo ~/code/photodedupe --mode define --force
-# → …/.claude/vibe-reports/2026-07-09T14-02-10Z    (pointer `latest` now → this dir)
+# → …/vibe/runs/2026-07-09T14-02-10Z-define
 ```
 
 (`--force` because a greenfield dir has no root markers yet.)
@@ -23,7 +23,7 @@ duplicate (exact bytes vs. same image re-encoded)? destructive or reversible? si
 libraries in play? The user answers: perceptual duplicates matter, must be reversible,
 ~50k photos.
 
-`spec.md` (excerpt):
+`vibe/spec.md` (excerpt — the current doc; the run dir holds `summary.md` + `state.json`):
 
 ```markdown
 # Spec: photodedupe CLI
@@ -48,12 +48,13 @@ group into a review directory, reversibly, for ~50k-photo libraries.
 - none (perceptual matching explicitly deferred to Out)
 ```
 
-Summary ends: *next mode `design` (read-only)*.
+`vibe/STATUS.md` now reads *Stage: define · Next: design (read-only)*; the summary ends
+the same way.
 
 ## 2. design
 
-New run dir `2026-07-09T14-20-45Z` (pointer advances). Upstream `spec.md` loaded from
-`latest`. Python target → `python-stack.md` applies (UV, Black 119, pytest).
+New run dir `2026-07-09T14-20-45Z-design`. Upstream `vibe/spec.md` loaded (written by
+run `…14-02-10Z-define`, per `vibe/state.json` `docs`). Python target → `python-stack.md` applies (UV, Black 119, pytest).
 
 `design.md` (excerpt): data model = `PhotoRecord(path, size, sha256)` + duplicate
 groups keyed by hash; modules `scan.py` (walk + filter), `hashing.py` (parallel
@@ -87,7 +88,7 @@ callable over registry — consequence: perceptual hash later = one new function
 
 ## 3. plan
 
-New run dir `2026-07-09T14-41-03Z`. Risk factors first: HEIC decoding on stock
+New run dir `2026-07-09T14-41-03Z-plan`. Risk factors first: HEIC decoding on stock
 laptops (mitigation: hash raw bytes, no decode needed for exact match — kills the
 risk); 50k-file performance (front-loaded as checkpoint 2 with a synthetic-tree
 benchmark).
@@ -104,10 +105,10 @@ approximable in CI (external signal: local run evidence). `checklist.md` written
 unticked. Summary ends: *next mode is `build` — mutates the repo, requires explicit
 written approval per checkpoint scope.*
 
-## 4. build — in place on `latest`
+## 4. build — on the current docs
 
-No new run dir; pointer frozen at the plan dir. Fail-fast check passes
-(`latest/plan.md` + `checklist.md` exist).
+No run dir. Fail-fast check passes (`vibe/plan.md` + `vibe/checklist.md` exist). Build
+progress is tracked in `vibe/state.json` `build`.
 
 Approval gate: *"Plan has 5 checkpoints; I propose starting with checkpoint 1
 (scaffold + scan). Approve?"* — User: **"Yes, implement checkpoint 1."** (Recorded
@@ -131,10 +132,10 @@ and asks; user approves; noted in the log. Checkpoints 2–5 proceed the same wa
 
 ## 5. verify
 
-New run dir `2026-07-09T16-30-12Z` — **pointer advances away from the plan dir**; to
-re-enter build afterwards, pass `…/2026-07-09T14-41-03Z` explicitly.
+New run dir `2026-07-09T16-30-12Z-verify`. The plan stays at `vibe/plan.md`, so
+re-entering `build` afterwards needs no path.
 
-Runs `verification-plan.md`: full pytest suite, undo round-trip, dry-run check, bench.
+Runs `vibe/verification-plan.md`: full pytest suite, undo round-trip, dry-run check, bench.
 One failure: corrupt-file warning goes to stdout, criterion says warning (stderr
 implied by CLI conventions — vibe-test-designer flags it as `tests`/`risk`).
 `verify-report.md`: Passed 5 / Failed 1 / Not run 0; verdict **fail** (criterion
@@ -144,7 +145,7 @@ and a re-run `verify` (new run dir) passes.
 
 ## 6. review
 
-New run dir. Diff scope from `build-log.md` file lists. **vibe-code-reviewer** +
+New run dir (`…-review`). Diff scope from `vibe/build-log.md` file lists. **vibe-code-reviewer** +
 **vibe-security-auditor** dispatched; merged per `schemas.md` (dedupe file+line+
 category, severity-sorted). Sample outcome: `simplicity`/`advisory` — bench script
 left a debug flag; `security`/`risk` — manifest written world-readable in a shared

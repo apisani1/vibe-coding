@@ -1,33 +1,37 @@
 #!/usr/bin/env python3
 """
-Create a new timestamped vibe-report run directory and update the `latest` pointer.
+Create a new timestamped run directory under `vibe/runs/` in the target repo.
 
 Output: prints the new directory path (absolute) to stdout.
 
 Usage:
-  new_run_dir.py --repo <path> --mode <mode> [--force]
+  new_run_dir.py --repo <path> --mode <mode> [--mode <mode> ...] [--snapshot <doc> ...] [--force]
 
 `--repo` is required and must be an absolute path to the target repository root. The
 script does not fall back to CWD because Bash CWD often resets between tool calls in
 agent contexts, which silently scatters run dirs under the wrong root. Fail loudly
 instead.
 
-The `latest` pointer is a plain text file (not a symlink), for Windows compatibility.
-Pointer write is atomic: tempfile + rename.
+Layout: current docs (spec.md, design.md, plan.md, ...) live at stable paths directly
+under `vibe/`; each run gets an immutable `vibe/runs/<UTC-ts>-<mode>[+<mode>...]/`. A
+session that spans several modes passes `--mode` once per mode and gets one run dir.
 
-Do NOT call this for `build` mode — build operates in place on the directory that
-`latest` currently points to. `ask` writes nothing, so it has no run dir either.
+`--snapshot <doc>` copies `vibe/<doc>` into `<run>/prior/<doc>` before the caller
+overwrites it, so every replaced revision stays recoverable. Docs that don't exist yet
+are skipped silently (first write).
+
+Do NOT call this for `build` mode — build updates the current docs in place and has no
+run dir. `ask` writes nothing, so it has no run dir either.
 """
 from __future__ import annotations
 
 import argparse
-import os
+import shutil
 import sys
-import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-RUN_DIR_MODES = {"env", "define", "design", "plan", "verify", "review"}
+RUN_DIR_MODES = ("env", "define", "design", "plan", "verify", "review")
 NO_RUN_DIR_MODES = {"ask", "build"}
 
 # Markers that make a directory look like a project root. Greenfield targets may have
@@ -38,7 +42,19 @@ ROOT_MARKERS = (".git", "pyproject.toml", "package.json", "Cargo.toml", "go.mod"
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", required=True, help="Absolute path to target root (required)")
-    ap.add_argument("--mode", required=True, help=f"One of: {', '.join(sorted(RUN_DIR_MODES))}")
+    ap.add_argument(
+        "--mode",
+        required=True,
+        action="append",
+        help=f"One of: {', '.join(RUN_DIR_MODES)}; repeat for a multi-mode run",
+    )
+    ap.add_argument(
+        "--snapshot",
+        nargs="+",
+        default=[],
+        metavar="DOC",
+        help="Current docs under vibe/ to copy into <run>/prior/ before they are replaced",
+    )
     ap.add_argument(
         "--force",
         action="store_true",
@@ -46,23 +62,32 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    if args.mode == "build":
-        print(
-            "error: do not create a new run dir for `build` mode; "
-            "operate in place on `latest`.",
-            file=sys.stderr,
-        )
-        return 2
-    if args.mode == "ask":
-        print("error: `ask` mode writes no artifacts and needs no run dir.", file=sys.stderr)
-        return 2
-    if args.mode not in RUN_DIR_MODES:
-        print(
-            f"error: unknown mode {args.mode!r}; expected one of "
-            f"{', '.join(sorted(RUN_DIR_MODES | NO_RUN_DIR_MODES))}.",
-            file=sys.stderr,
-        )
-        return 2
+    modes: list[str] = []
+    for mode in args.mode:
+        if mode == "build":
+            print(
+                "error: do not create a run dir for `build` mode; "
+                "it updates vibe/checklist.md and vibe/build-log.md in place.",
+                file=sys.stderr,
+            )
+            return 2
+        if mode == "ask":
+            print("error: `ask` mode writes no artifacts and needs no run dir.", file=sys.stderr)
+            return 2
+        if mode not in RUN_DIR_MODES:
+            print(
+                f"error: unknown mode {mode!r}; expected one of "
+                f"{', '.join(sorted(set(RUN_DIR_MODES) | NO_RUN_DIR_MODES))}.",
+                file=sys.stderr,
+            )
+            return 2
+        if mode not in modes:
+            modes.append(mode)
+
+    for doc in args.snapshot:
+        if Path(doc).name != doc:
+            print(f"error: --snapshot takes bare file names under vibe/, got {doc!r}.", file=sys.stderr)
+            return 2
 
     repo = Path(args.repo).resolve()
     if not repo.is_dir():
@@ -77,25 +102,20 @@ def main() -> int:
         )
         return 2
 
-    reports = repo / ".claude" / "vibe-reports"
-    reports.mkdir(parents=True, exist_ok=True)
+    vibe = repo / "vibe"
+    runs = vibe / "runs"
+    runs.mkdir(parents=True, exist_ok=True)
 
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
-    run_dir = reports / ts
+    run_dir = runs / f"{ts}-{'+'.join(modes)}"
     run_dir.mkdir(exist_ok=False)
 
-    pointer = reports / "latest"
-    fd, tmp_path = tempfile.mkstemp(dir=str(reports), prefix=".latest.", suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w") as f:
-            f.write(ts + "\n")
-        os.replace(tmp_path, pointer)
-    except Exception:
-        try:
-            os.unlink(tmp_path)
-        except FileNotFoundError:
-            pass
-        raise
+    for doc in args.snapshot:
+        src = vibe / doc
+        if src.is_file():
+            prior = run_dir / "prior"
+            prior.mkdir(exist_ok=True)
+            shutil.copy2(src, prior / doc)
 
     print(str(run_dir))
     return 0

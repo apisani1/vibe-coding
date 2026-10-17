@@ -9,7 +9,7 @@ Parse positional args as `<mode> [target] [--ci] [--json] [--auto]`:
 
 - `mode` — one of `ask`, `env`, `define`, `design`, `plan`, `build`, `verify`,
   `review`. If missing or ambiguous, ask which mode the user wants (suggest the next
-  pipeline mode based on `.claude/vibe-reports/latest` when it exists).
+  pipeline mode from `vibe/STATUS.md` / `vibe/state.json` `next_mode` when it exists).
 - `target` — path to the target project root; defaults to the current working
   directory.
 - `--ci` — headless mode (valid for `verify` and `review` only).

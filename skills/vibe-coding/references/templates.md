@@ -19,6 +19,7 @@ is a smell — push the interview harder).
 - [env-report.md](#env-reportmd) (`env`)
 - [CLAUDE.md template](#claudemd-template) (`env`)
 - [summary.md](#summarymd) (all run-dir modes)
+- [STATUS.md](#statusmd) (every mode except `ask`)
 - [preferences.md](#preferencesmd) (user profile — bare greenfield)
 
 ---
@@ -63,7 +64,7 @@ plus any already-exported names that must stay back-compatible.>
 ```markdown
 # Design: <title>
 
-Upstream spec: <run-dir path>/spec.md
+Upstream spec: vibe/spec.md (written by run <run id>)
 
 ## Overview
 <how the system technically works, in prose — ArjanCodes step 3>
@@ -112,7 +113,7 @@ concurrent write — each with intended behavior>
 ```markdown
 # Plan: <title>
 
-Upstream design: <run-dir path>/design.md
+Upstream design: vibe/design.md (written by run <run id>)
 
 ## Risk factors (ArjanCodes step 5 — identified first)
 - <risk> → mitigation/alternative route: <…>
@@ -208,7 +209,7 @@ When the plan uses phases, group the lines under phase headings:>
 ```markdown
 # Verify report
 
-Plan under test: <run-dir path>/verification-plan.md
+Plan under test: vibe/verification-plan.md (written by run <run id>)
 
 ## Passed
 - `<check>` — <evidence: exit code, output line, artifact>
@@ -334,10 +335,11 @@ proposal — rewrite it once anything lands in the repo (`modes.md § env` step 
 - Target: <repo path> (bare greenfield | scaffolded greenfield | existing — matches
   `state.json` `greenfield_kind`)
 - Scope: <one line>
-- Upstream run consumed: <run-dir name, or "none">
+- Upstream consumed: <vibe/ docs read + the run id that wrote each, or "none">
 - Sub-agents used: <names dispatched | "none — no sub-agent owns this mode" | "none
   installed — inline fallback used">
-- Artifacts: <every file written to the run dir, matching `state.json` `artifacts`>
+- Artifacts: <every file this run wrote — run-dir files plus any `vibe/` docs, matching
+  `state.json` `artifacts` + `docs_written`>
 - Findings: <counts by severity, verify/review only>
 - Next: <next pipeline mode + its approval boundary>
 ```
@@ -346,6 +348,35 @@ Two traps in this block: *"none"* here is prose for humans — `state.json`'s
 `upstream_run` takes the JSON literal `null`, never the string. And "no sub-agent owns
 this mode" is not "none installed"; `define` has no owning specialist even when all five
 are present, so don't report that as unavailability.
+
+## STATUS.md
+
+`vibe/STATUS.md` — the one file a human opens to learn where the project stands.
+Rewritten (not appended) at the end of every mode except `ask`; must agree with
+`vibe/state.json`.
+
+```markdown
+# Status: <project / scope>
+
+- Stage: <last completed mode> (<run id>, <UTC date>)
+- Next: <next pipeline mode + its approval boundary>
+- Build progress: <n of m checkpoints done (phase k) | "not started">
+- Open blockers: <count + one line each with the run that raised it, or "none">
+
+## Current docs
+| Doc | Last written by |
+| --- | --- |
+| spec.md | <run id> |
+| design.md / decisions.md | <run id> |
+| plan.md / checklist.md / verification-plan.md | <run id> |
+
+## Recent runs
+- <run id> — <mode>: <one-line outcome>   (newest first, last ~5; full history in runs/)
+
+<!-- only when `git check-ignore -q vibe/` matches: -->
+> Note: your `.gitignore` excludes `vibe/`, so this history is not committed. Left
+> unchanged — remove the rule yourself if you want it tracked.
+```
 
 ## preferences.md
 

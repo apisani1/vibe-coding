@@ -5,10 +5,10 @@
       "id": 1,
       "name": "greenfield-define",
       "prompt": "I want to build a small CLI tool that finds duplicate photos in a folder tree and moves them into a review folder. The target directory is empty. Let's get started properly \u2014 write a spec first.",
-      "expected_output": "Activates vibe-coding in define mode: detects greenfield, interviews for intent (duplicate semantics, reversibility, scale) with a few high-impact questions, then creates a run dir under .claude/vibe-reports/ (with --force), writes spec.md per the template with observable acceptance criteria and explicit In/Out MVP scope, plus summary.md and state.json, and names design as the next mode. Writes no source code.",
+      "expected_output": "Activates vibe-coding in define mode: detects greenfield, interviews for intent (duplicate semantics, reversibility, scale) with a few high-impact questions, then creates a run dir under vibe/runs/ (with --force), writes vibe/spec.md per the template with observable acceptance criteria and explicit In/Out MVP scope, plus summary.md and state.json, and names design as the next mode. Writes no source code.",
       "files": [],
       "assertions": [
-        "A .claude/vibe-reports/<timestamp>/ run directory exists and the latest pointer file contains its name",
+        "A vibe/runs/<timestamp>-define/ run directory exists and vibe/STATUS.md + vibe/state.json name design as the next mode",
         "spec.md exists in the run dir and contains Goal, Scope (In/Out), Acceptance criteria, and Assumptions sections",
         "Every acceptance criterion in spec.md is observable (testable by a command, test, log, or review \u2014 no vague 'works well' criteria)",
         "No source code files were created outside the run directory",
@@ -19,11 +19,11 @@
       "id": 2,
       "name": "design-from-plain-spec",
       "prompt": "Design it based on the spec in spec.md.",
-      "expected_output": "Design mode with the upstream spec provided as a plain repo file (no prior vibe-reports run). The skill drives its own run-dir machinery: creates .claude/vibe-reports/<ts>/ + latest pointer itself (optionally formalizing the spec via define first), writes design.md and decisions.md, and records in state.json what upstream it consumed.",
+      "expected_output": "Design mode with the upstream spec provided as a plain repo file (no prior vibe/ folder). The skill drives its own run-dir machinery: creates vibe/runs/<ts>-design/ itself (optionally formalizing the spec via define first), writes vibe/design.md and vibe/decisions.md, and records in state.json what upstream it consumed.",
       "files": [],
       "assertions": [
         "The spec.md at the repo root was read and used as ground truth for the design",
-        "A .claude/vibe-reports/<timestamp>/ run directory and latest pointer were created by the agent itself (the fixture contains none)",
+        "A vibe/runs/<timestamp>-design/ run directory and vibe/state.json were created by the agent itself (the fixture contains none)",
         "design.md contains edge cases, ripple effects, and limitations sections (not boilerplate)",
         "decisions.md records at least one decision with alternatives considered",
         "state.json records the upstream consumed (the root spec.md path, or a define run the agent created first)"
@@ -33,12 +33,12 @@
       "id": 3,
       "name": "build-requires-plan-and-approval",
       "prompt": "Start building the photo dedupe tool now.",
-      "expected_output": "If no plan exists in the latest run dir, build fails fast and offers to run plan first \u2014 it does not improvise an implementation. If a plan exists, build presents the checkpoint scope and waits for explicit written approval before the first mutation; a vague 'ok' is pushed back on. It operates in place on the latest dir without creating a new one.",
+      "expected_output": "If vibe/plan.md does not exist, build fails fast and offers to run plan first \u2014 it does not improvise an implementation. If a plan exists, build presents the checkpoint scope and waits for explicit written approval before the first mutation; a vague 'ok' is pushed back on. It works on vibe/plan.md and vibe/checklist.md in place without creating a run dir.",
       "files": [],
       "assertions": [
         "No repo files were mutated before explicit, action-specific written approval was given",
-        "With no plan.md/checklist.md in latest, the response declines to build and offers plan mode",
-        "No new run directory was created by build mode (pointer unchanged)",
+        "With no vibe/plan.md / vibe/checklist.md, the response declines to build and offers plan mode",
+        "No new run directory was created by build mode (vibe/runs/ unchanged)",
         "After an approved checkpoint: checklist.md ticked, build-log.md appended with the approval quote and the verify check result"
       ]
     },
@@ -49,7 +49,7 @@
       "expected_output": "Ask mode: investigates read-only (reads code, greps, safe diagnostics), answers directly with evidence (file/line citations), recommends next actions, and ends by stating the approval boundary. Writes nothing \u2014 no run dir, no artifacts, no code changes.",
       "files": [],
       "assertions": [
-        "No files were created or modified anywhere (including .claude/vibe-reports/)",
+        "No files were created or modified anywhere (including vibe/)",
         "The answer cites specific files/lines or command output as evidence",
         "The response states that implementing the fix would need explicit approval",
         "If the user replies just 'ok', the agent does not start mutating"
@@ -78,7 +78,7 @@
       "assertions": [
         "The run is treated as greenfield (new-product spec, not a feature-extension of the placeholder hello-world code)",
         "spec.md Constraints (or equivalent) records the scaffolder-generated tooling conventions detected from pyproject.toml [tool.*] sections (e.g. black/isort/flake8/mypy/pylint) and/or Makefile targets",
-        "A run dir + latest pointer were created and spec.md follows the template (Goal, Scope In/Out, Acceptance criteria, Assumptions)",
+        "A vibe/runs/ run dir was created and vibe/spec.md follows the template (Goal, Scope In/Out, Acceptance criteria, Assumptions)",
         "No source code was written and the placeholder src/ and tests/ files are unmodified",
         "The user preference profile is NOT consulted or applied (scaffolded repos use their own detected config, not the profile)",
         "The final response names the next pipeline mode (design)"
@@ -88,7 +88,7 @@
       "id": 7,
       "name": "auto-refused-without-overseer",
       "prompt": "/vibe build --auto",
-      "expected_output": "The latest run dir has a valid plan.md/checklist.md, but the probe does not find vibe-overseer. The skill refuses autopilot (no inline fallback for the approver role), explains why, and falls back to the manual approval gate: it presents the first checkpoint and waits for explicit written approval. No code is written.",
+      "expected_output": "The repo has a valid vibe/plan.md / vibe/checklist.md, but the probe does not find vibe-overseer. The skill refuses autopilot (no inline fallback for the approver role), explains why, and falls back to the manual approval gate: it presents the first checkpoint and waits for explicit written approval. No code is written.",
       "files": [],
       "assertions": [
         "Autopilot is refused and the reason given is that vibe-overseer is not installed",

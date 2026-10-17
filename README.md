@@ -17,12 +17,24 @@ define → design → plan → build → verify → review
 ```
 
 `ask` (read-only investigation) and `env` (persist project commands into CLAUDE.md) are
-available at any point. Modes are a soft pipeline: each writes its artifacts into a
-timestamped run directory and names the next mode; you can enter at any stage.
+available at any point. Modes are a soft pipeline: each names the next mode; you can
+enter at any stage.
 
-All runtime artifacts (`spec.md`, `design.md`, `plan.md`, `findings.json`, …) are written
-to **the target repo's** `.claude/vibe-reports/<timestamp>/`, never to your home
-directory — they belong next to the code they describe.
+All runtime artifacts live in **the target repo's** `vibe/` folder, never in your home
+directory — they belong next to the code they describe, and are meant to be committed:
+
+```
+vibe/
+  STATUS.md        # where the project stands and what comes next
+  state.json       # the same, machine-readable (incl. build progress)
+  spec.md  design.md  decisions.md  plan.md  checklist.md  verification-plan.md  build-log.md
+  runs/<UTC-timestamp>-<mode>/   # one per run: reports, findings.json, summary,
+                                 # and prior/ snapshots of any doc the run replaced
+```
+
+The current spec, design, and plan are always at the same path; every revision and
+every verify/review report stays in `runs/`. The skill never adds `vibe/` to your
+`.gitignore` (or edits it for this) — if your ignore rules exclude it, `STATUS.md` says so.
 
 ## Install
 

@@ -75,21 +75,75 @@ missing test is a `blocker` if it guards an acceptance criterion and `risk` othe
 
 ## state.json
 
-Written by every run-dir mode (not `ask`; `build` updates the existing one in place).
-This is what makes runs chainable and auditable:
+Two files share the name; they have different jobs.
+
+### Run state — `vibe/runs/<run id>/state.json`
+
+Written by every run-dir mode (not `ask` or `build`). Immutable once the run ends
+(except `env`'s apply step). This is what makes runs auditable:
 
 ```json
 {
   "mode": "plan",
+  "run_id": "2026-07-09T14-30-00Z-plan",
   "created_at": "2026-07-09T14:30:00Z",
   "target": "/abs/path/to/repo",
   "greenfield": false,
   "greenfield_kind": "existing",
   "scope": "photo-dedupe CLI, MVP per spec",
-  "upstream_run": "2026-07-09T13-05-11Z",
-  "upstream_artifacts": ["design.md", "decisions.md"],
+  "upstream_run": "2026-07-09T13-05-11Z-design",
+  "upstream_artifacts": ["vibe/design.md", "vibe/decisions.md"],
   "subagents_used": ["vibe-test-designer"],
-  "artifacts": ["plan.md", "checklist.md", "verification-plan.md", "summary.md", "state.json"],
+  "docs_written": ["vibe/plan.md", "vibe/checklist.md", "vibe/verification-plan.md"],
+  "artifacts": ["prior/plan.md", "summary.md", "state.json"]
+}
+```
+
+Field notes — these are exact; emitting a near-miss breaks downstream consumers:
+
+| Field             | Rule                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| `mode`            | The mode, or `"define+design"`-style for a multi-mode run (matches the dir suffix).   |
+| `run_id`          | The run dir's name, exactly.                                                          |
+| `target`          | Absolute path, **no trailing slash** (so string comparison across runs is stable).    |
+| `greenfield`      | Boolean. `true` for **both** bare and scaffolded.                                     |
+| `greenfield_kind` | `"bare"` \| `"scaffolded"` \| `"existing"` — the three-way tier `greenfield` flattens. Always emit it; `greenfield` alone cannot distinguish bare from scaffolded, and the two drive different behavior. |
+| `upstream_run`    | The `run_id` that last wrote the upstream doc consumed (from top-level `docs`), or **`null`** — the JSON literal, never the string `"none"` or `""`. |
+| `upstream_artifacts` | The `vibe/`-relative docs actually read.                                           |
+| `docs_written`    | Current docs this run wrote under `vibe/`; `[]` for report-only modes (`verify`, `review`, `env`). |
+| `artifacts`       | **Every** file this run wrote into its run dir (`prior/` snapshots, `state.json`, `summary.md` included). A manifest of the directory, not a list of headline outputs. |
+| `profile`         | Optional; emit when a preference profile was consulted: `{"present": bool, "profile_dir": "<abs path>"}`. Omit entirely when it wasn't. |
+| `applied` / `applied_at` / `approval_quote` | **`env` only**, and only once it has actually written to the repo: `true`, the UTC timestamp, and the user's approving message **verbatim** — the approval of record for a repo-mutating mode, the same role `build.auto.grant_quote` plays for autopilot. Absent (or `"applied": false`) while the proposal is still pending. |
+
+Keep `artifacts` + `docs_written` and `summary.md`'s Artifacts line in agreement — they
+describe the same set, and a mismatch means one of the two is wrong. Likewise, `applied`
+must agree with `summary.md` and with the repo: a `state.json` saying `applied: true`
+beside a `summary.md` saying "proposed, not yet applied" means one of them was never
+finalized (see `modes.md § env` step 5).
+
+### Project state — `vibe/state.json`
+
+The single mutable record of where the project stands; replaces any "latest run"
+pointer. Rewritten at the end of every mode except `ask`, together with `vibe/STATUS.md`
+(they must agree):
+
+```json
+{
+  "target": "/abs/path/to/repo",
+  "greenfield_kind": "existing",
+  "stage": "build",
+  "last_run": "2026-07-09T14-30-00Z-plan",
+  "next_mode": "verify",
+  "docs": {
+    "spec.md": "2026-07-09T12-40-02Z-define",
+    "design.md": "2026-07-09T13-05-11Z-design",
+    "decisions.md": "2026-07-09T13-05-11Z-design",
+    "plan.md": "2026-07-09T14-30-00Z-plan",
+    "checklist.md": "2026-07-09T14-30-00Z-plan",
+    "verification-plan.md": "2026-07-09T14-30-00Z-plan"
+  },
+  "open_blockers": 0,
+  "gitignored": false,
   "build": {
     "approvals": ["2026-07-09T15:02:44Z checkpoint-1..2 — 'Yes, implement checkpoints 1 and 2'"],
     "completed_checkpoints": ["1", "2"],
@@ -103,29 +157,14 @@ This is what makes runs chainable and auditable:
 }
 ```
 
-The `build.auto` object exists only for `--auto` runs: `grant_quote` is the user's
-invocation verbatim (it is the written approval of record), and `max_checkpoints`
-comes from `.claude/vibe-coding.local.md` `auto_max_checkpoints` (default 10).
-
-The `build` object exists only after `build` has run against this dir.
-
-Field notes — these are exact; emitting a near-miss breaks downstream consumers:
-
-| Field             | Rule                                                                                 |
-| ----------------- | ------------------------------------------------------------------------------------ |
-| `target`          | Absolute path, **no trailing slash** (so string comparison across runs is stable).    |
-| `greenfield`      | Boolean. `true` for **both** bare and scaffolded.                                     |
-| `greenfield_kind` | `"bare"` \| `"scaffolded"` \| `"existing"` — the three-way tier `greenfield` flattens. Always emit it; `greenfield` alone cannot distinguish bare from scaffolded, and the two drive different behavior. |
-| `upstream_run`    | The run-dir name consumed, or **`null`** — the JSON literal, never the string `"none"` or `""`. When a mode loads its upstream from an explicit path rather than `latest`, record that path: the chain must reflect what was actually read. |
-| `artifacts`       | **Every** file this run wrote into the run dir, `state.json` and `summary.md` included. It is a manifest of the directory, not a list of the mode's headline outputs. |
-| `profile`         | Optional; emit when a preference profile was consulted: `{"present": bool, "profile_dir": "<abs path>"}`. Omit entirely when it wasn't. |
-| `applied` / `applied_at` / `approval_quote` | **`env` only**, and only once it has actually written to the repo: `true`, the UTC timestamp, and the user's approving message **verbatim** — the approval of record for a repo-mutating mode, the same role `build.auto.grant_quote` plays for autopilot. Absent (or `"applied": false`) while the proposal is still pending. |
-
-Keep `artifacts` and `summary.md`'s Artifacts line in agreement — they describe the same
-set, and a mismatch between them means one of the two is wrong. Likewise, `applied` must
-agree with `summary.md` and with the repo: a `state.json` saying `applied: true` beside a
-`summary.md` saying "proposed, not yet applied" means one of them was never finalized
-(see `modes.md § env` step 5).
+| Field           | Rule |
+| --------------- | ---- |
+| `stage`         | Last mode that completed (`build` included, `ask` never). |
+| `last_run`      | Newest `run_id`; `build` leaves it unchanged (no run dir). |
+| `docs`          | Each current doc → the `run_id` that last wrote it. Only docs that exist. |
+| `open_blockers` | Blocker count from the newest `verify`/`review` `findings.json`; `0` when none ran. |
+| `gitignored`    | Result of `git check-ignore -q vibe/` (`false` outside a git repo). Report only — never edit `.gitignore`. |
+| `build`         | Exists only after `build` has run. `auto` exists only for `--auto` runs: `grant_quote` is the user's invocation verbatim (the written approval of record), and `max_checkpoints` comes from `.claude/vibe-coding.local.md` `auto_max_checkpoints` (default 10). A re-`plan` keeps this object and the completed checkpoints it carried forward. |
 
 ## Sub-agent invocation & return contract
 
@@ -141,7 +180,7 @@ agent is absent. Never hardcode a bare name for dispatch — always use `invoke_
 
 ```
 repo_path: <absolute path to target repo>
-run_dir: <absolute path to the current run dir>
+run_dir: <absolute path to the current run dir, vibe/runs/<run id>>
 artifact_paths: <the upstream artifacts this agent must read, absolute paths>
 scope_glob: <default **/*; narrow for monorepos>
 task: <one paragraph: exactly what to analyze and against what ground truth>

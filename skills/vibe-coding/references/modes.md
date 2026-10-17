@@ -12,11 +12,18 @@ Common to all modes:
   always dispatch using the probe's `invoke_name` (bare or plugin-namespaced), never a
   hardcoded name.
 - Run-dir modes (`env`, `define`, `design`, `plan`, `verify`, `review`): create the dir
-  via `scripts/new_run_dir.py --repo <target> --mode <mode>`, write the mode artifacts
-  plus `summary.md` and `state.json`, and end with a terse summary naming the next mode
-  and its approval boundary.
-- Upstream chaining: resolve the upstream artifact from
-  `.claude/vibe-reports/latest` unless the user passed an explicit run-dir path. If
+  via `scripts/new_run_dir.py --repo <target> --mode <mode>`, passing
+  `--snapshot <doc>` for every current doc under `vibe/` the mode is about to replace
+  (`define`: `spec.md`; `design`: `design.md decisions.md`; `plan`: `plan.md
+  checklist.md verification-plan.md`). Write current docs to `vibe/`, reports plus
+  `summary.md` and `state.json` to the run dir, and end with a terse summary naming the
+  next mode and its approval boundary. One session running several modes back to back
+  passes `--mode` once per mode and shares a single run dir.
+- Every mode except `ask` finishes by rewriting `vibe/STATUS.md` (templates.md) and
+  `vibe/state.json` (schemas.md) — stage, current-doc provenance, open blockers, next
+  mode. If `git check-ignore -q vibe/` matches, note it there; never edit `.gitignore`
+  for it.
+- Upstream chaining: read the upstream doc from `vibe/` (`spec.md`, `design.md`, …). If
   it's missing, **offer to run the missing upstream mode first** — don't silently
   fabricate an upstream.
 
@@ -47,7 +54,7 @@ mode — answer, then return to the pipeline.
 Set up the workshop: the environment the **agent** operates inside (durable context,
 reusable knowledge, explicit safety rules) and the **development** environment the
 project is built with (tooling config and editor/VCS assets seeded from the user
-preference profile). Artifacts: `env-report.md`, `summary.md`, `state.json`.
+preference profile). Artifacts (run dir): `env-report.md`, `summary.md`, `state.json`.
 Repo writes **only after explicit written approval**.
 
 1. **Audit.** Look for CLAUDE.md/AGENTS.md, README, architecture docs, package
@@ -79,14 +86,15 @@ Repo writes **only after explicit written approval**.
    the end of step 3 describe a *proposal*. Once anything is written to the repo, rewrite
    both: `summary.md` must list what was actually applied (never leave "proposed, not yet
    applied" standing, and never let the Next line claim nothing was written), and
-   `state.json` gets `applied`, `applied_at`, `approval_quote` (`schemas.md`). If the
+   `state.json` gets `applied`, `applied_at`, `approval_quote` (`schemas.md`); refresh
+   `vibe/STATUS.md` to match. If the
    user declines, say so explicitly instead — a stale summary that contradicts the repo
    is worse than either outcome, because the next mode reads it first.
 
 ## define
 
-ArjanCodes steps 1–2 + the spec interview. Artifact: `spec.md` (+ `summary.md`,
-`state.json`). Read-only wrt repo code.
+ArjanCodes steps 1–2 + the spec interview. Artifact: `vibe/spec.md` (+ run-dir
+`summary.md`, `state.json`). Read-only wrt repo code.
 
 1. **Ground.** Classify the target per SKILL.md § Greenfield vs. existing codebase, then:
    - Bare greenfield: consult the user preference profile
@@ -122,10 +130,10 @@ Next: `design` (read-only).
 
 ## design
 
-ArjanCodes steps 3, 6, 7. Artifacts: `design.md`, `decisions.md` (+ `summary.md`,
-`state.json`). Read-only wrt repo code. Sub-agent: **vibe-architect**.
+ArjanCodes steps 3, 6, 7. Artifacts: `vibe/design.md`, `vibe/decisions.md` (+ run-dir
+`summary.md`, `state.json`). Read-only wrt repo code. Sub-agent: **vibe-architect**.
 
-1. **Load upstream** `spec.md` (offer `define` if missing).
+1. **Load upstream** `vibe/spec.md` (offer `define` if missing).
 2. **Ground.** Existing codebase: catalogue the patterns, layers, and conventions the
    design must fit; a design that ignores the codebase's idiom is drift by
    construction. Greenfield: pick the simplest structure that satisfies the spec —
@@ -153,11 +161,11 @@ Next: `plan` (read-only).
 
 ## plan
 
-ArjanCodes steps 4–5. Artifacts: `plan.md`, `checklist.md`, `verification-plan.md`
-(+ `summary.md`, `state.json`). Read-only wrt repo code. Sub-agent:
+ArjanCodes steps 4–5. Artifacts: `vibe/plan.md`, `checklist.md`, `verification-plan.md`
+(+ run-dir `summary.md`, `state.json`). Read-only wrt repo code. Sub-agent:
 **vibe-test-designer**.
 
-1. **Load upstream** `design.md` (offer `design` if missing).
+1. **Load upstream** `vibe/design.md` (offer `design` if missing).
 2. **Risk factors first.** Identify them before sequencing — the risky part is usually
    the unfamiliar integration. Give each a mitigation or alternative route. Front-load
    risky checkpoints so infeasibility surfaces early.
@@ -178,6 +186,10 @@ ArjanCodes steps 4–5. Artifacts: `plan.md`, `checklist.md`, `verification-plan
    - Declare up front what cannot be verified locally.
    - Don't chase 100% coverage — cover the acceptance criteria and the risks.
 5. **Write `checklist.md`** — one line per checkpoint with its verify check, unticked.
+   **Re-planning** (a `vibe/checklist.md` already exists): snapshot the old docs (the
+   `--snapshot` above), carry every completed checkpoint forward ticked and unchanged,
+   and if the old checklist has unticked checkpoints, confirm with the user before
+   replacing it. Never drop build progress or the `build` object in `vibe/state.json`.
 6. **Definition of Done:** required vs optional-later, from the spec's MVP cut.
 
 End-of-run summary must state: *next mode is `build`, which mutates the repo and
@@ -185,12 +197,12 @@ requires explicit written approval per checkpoint scope.*
 
 ## build
 
-Execute the plan in checkpoints. **The only repo-mutating mode.** Operates **in place**
-on the run dir `latest` points to — no new run dir, pointer frozen. Updates
-`checklist.md`, appends `build-log.md`.
+Execute the plan in checkpoints. **The only repo-mutating mode.** No run dir: works on
+the current docs — ticks `vibe/checklist.md`, appends `vibe/build-log.md`, and keeps the
+`build` object in `vibe/state.json` current (approvals, completed checkpoints, `auto`).
 
-**Fail fast:** if `latest/plan.md` or `latest/checklist.md` is missing, stop and offer
-to run `plan`. Never build without a plan.
+**Fail fast:** if `vibe/plan.md` or `vibe/checklist.md` is missing, stop and offer to
+run `plan`. Never build without a plan.
 
 1. **Load** `plan.md`, `checklist.md`, `verification-plan.md`, and the upstream
    spec/design for ground truth.
@@ -241,7 +253,7 @@ approver role. Rules:
 - **Precondition:** probe must find `vibe-overseer`. Absent → refuse autopilot and
   fall back to manual approval gates. There is **no inline fallback for the approver
   role — ever**: the skill must not approve its own work.
-- **Grant recording:** write to `state.json` an `auto` object (`granted_at`,
+- **Grant recording:** write to `vibe/state.json` `build.auto` (`granted_at`,
   `grant_quote` — the user's command verbatim, `max_checkpoints` — default 10,
   overridable via `.claude/vibe-coding.local.md` `auto_max_checkpoints`).
 - **Loop change:** after each checkpoint's verify evidence lands (step 3c), dispatch
@@ -259,12 +271,10 @@ approver role. Rules:
 ## verify
 
 Execute `verification-plan.md`; report evidence honestly. Artifacts:
-`verify-report.md`, `findings.json` (+ `summary.md`, `state.json`). New run dir
-(`latest` advances — to re-enter `build` afterwards, pass the plan run-dir path
-explicitly). Sub-agents: **vibe-test-designer** (coverage), **vibe-security-auditor**.
+`verify-report.md`, `findings.json` (+ `summary.md`, `state.json`) in a new run dir.
+Sub-agents: **vibe-test-designer** (coverage), **vibe-security-auditor**.
 
-1. **Load** the verification plan from the build's run dir (`latest` at entry, or an
-   explicit path). Missing → offer `plan`.
+1. **Load** `vibe/verification-plan.md`. Missing → offer `plan`.
 2. **Run the checks** in the plan. Read-only and existing project checks (tests, lint,
    typecheck, build) run freely; ask first before anything state-mutating
    (migrations, deploys, installs). Capture real evidence: exit codes, output lines,
