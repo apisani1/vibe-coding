@@ -1,0 +1,48 @@
+schema_version: "1.1"
+name: 08-redefine-no-scripts
+description: >
+  Re-running define over an existing vibe/spec.md while python3 is denied: with no
+  run-dir snapshot possible, the skill must write vibe/spec.draft.md and leave the
+  original untouched.
+context:
+  # Seeds a v1 vibe/spec.md. Needs `--scaffold` on the eval command line.
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  # No Bash(python3:*): new_run_dir.py can't run, so no prior/ snapshot is possible.
+  allowed_tools: [Skill, Read, Glob, Grep, Write, "Bash(ls:*)", "Bash(mkdir:*)"]
+  prompt: >
+    Re-run define for mdtoc, the CLI specified in vibe/spec.md. Add one requirement:
+    a `--dry-run` flag that prints the would-be file to stdout and leaves the file on
+    disk unchanged. Everything else in the spec stays as is. The target is the current
+    directory. Spec only — no code.
+runs: 3
+graders:
+  - name: original-unchanged
+    type: regex
+    target: {source: file, path: vibe/spec.md}
+    match: not_contains
+    pattern: dry-run
+  - name: draft-written
+    type: regex
+    target: {source: file, path: vibe/spec.draft.md}
+    match: contains
+    pattern: "--dry-run"
+  - name: no-fake-run-dir
+    type: regex
+    target: files
+    match: count:0
+    flags: m
+    pattern: "^vibe/runs/"
+    weight: 0.5
+  - name: reports-draft
+    type: llm
+    focus: last_message
+    weight: 0.5
+    criteria: |
+      Score PASS only if ALL of the following hold for the final message:
+      1. It says the helper script (run directory / snapshot) could not run, or that no backup of the previous spec could be made.
+      2. It names the draft file (`vibe/spec.draft.md`) as where the updated spec was written, and says the existing `vibe/spec.md` was left unchanged.
+      3. It tells the user how to adopt the draft (e.g. rename/replace the original, or re-run once scripts work).
+      4. It does NOT state a run id or timestamp as if a run directory had been created.
