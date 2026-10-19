@@ -27,6 +27,12 @@ Common to all modes:
   denied command does not mean Bash is unavailable — permissions are per command — so
   still try each script on its own before concluding it can't run; if it truly can't,
   say so in the summary and `STATUS.md`, and never invent a timestamp or run dir.
+  Without `new_run_dir.py` there is no `prior/` snapshot, so **never overwrite an
+  existing `vibe/` doc**: write the new version beside it as `vibe/<doc>.draft.md`
+  (e.g. `spec.draft.md`), leave the current doc untouched, and have `STATUS.md` and the
+  summary name the draft and the reason. Downstream modes keep reading the current doc
+  until the user promotes the draft (rename it over the original, or re-run the mode
+  once scripts work). Docs that don't exist yet are written at their normal path.
 - Upstream chaining: read the upstream doc from `vibe/` (`spec.md`, `design.md`, …). If
   it's missing, **offer to run the missing upstream mode first** — don't silently
   fabricate an upstream.
