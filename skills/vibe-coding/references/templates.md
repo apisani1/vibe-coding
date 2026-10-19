@@ -44,13 +44,14 @@ plus any already-exported names that must stay back-compatible.>
 
 ## Scope
 - In (MVP): <the minimum needed to test whether this is useful>
-- Out: <explicitly deferred — with one-line reasons>
+- Out: <explicitly deferred — one item per bullet, each with its own one-line reason>
 
 ## Constraints
 - <repo, runtime, API, compatibility, design-system, data-format, or safety constraints>
 
 ## Acceptance criteria
-- <observable result — each one must be verifiable by a test, command, log, or review>
+- <observable result — each one checkable by a test, command, exit code, log line, or file
+  comparison, with a concrete threshold where it measures something; never "by review" alone>
 
 ## Assumptions
 - <explicit assumption or default the user has not confirmed>

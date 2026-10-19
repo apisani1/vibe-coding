@@ -23,6 +23,10 @@ Common to all modes:
   `vibe/state.json` (schemas.md) — stage, current-doc provenance, open blockers, next
   mode. If `git check-ignore -q vibe/` matches, note it there; never edit `.gitignore`
   for it.
+- Run each helper script as its own Bash call, never chained to other commands. A
+  denied command does not mean Bash is unavailable — permissions are per command — so
+  still try each script on its own before concluding it can't run; if it truly can't,
+  say so in the summary and `STATUS.md`, and never invent a timestamp or run dir.
 - Upstream chaining: read the upstream doc from `vibe/` (`spec.md`, `design.md`, …). If
   it's missing, **offer to run the missing upstream mode first** — don't silently
   fabricate an upstream.
@@ -122,8 +126,15 @@ ArjanCodes steps 1–2 + the spec interview. Artifact: `vibe/spec.md` (+ run-dir
 4. **Write `spec.md`** per the template: goal, concepts, user stories (happy +
    alternative flows), In/Out scope, constraints, acceptance criteria (each one
    observable), assumptions, open questions.
-5. **Quality gate before emitting:** every acceptance criterion is verifiable by a
-   test/command/log/review; scope is small enough to review; assumptions are explicit.
+5. **Quality gate before emitting** — re-read the draft and fix every miss:
+   - **Every acceptance criterion is mechanically checkable**: a test, command, exit
+     code, log line, or file comparison, with a concrete threshold where it measures
+     something (bytes, ms, MB). "Reviewed" or "documented" alone is not a check — make it
+     one (e.g. "README contains sections X and Y") or move it to Assumptions / Open
+     questions.
+   - **Every Out item has its own one-line reason** — no bare items, and no grouped
+     bullet sharing one reason across unrelated items.
+   - Scope is small enough to review; assumptions are explicit.
    Open questions must be resolved or explicitly accepted by the user before `plan`.
 
 Next: `design` (read-only).

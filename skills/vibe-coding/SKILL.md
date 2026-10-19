@@ -130,7 +130,9 @@ Use `scripts/new_run_dir.py --repo <target> --mode <mode> [--snapshot <doc>...]`
 create the run dir and snapshot docs about to be replaced (it refuses `ask` and
 `build`; repeat `--mode` for a multi-mode run). Run each helper script as its **own
 Bash call** — never chained with `&&`/`;` to other commands (permission rules match
-whole commands). If a script can't run, say so in the end-of-run summary and
+whole commands). A denied command does not mean Bash is unavailable: permissions are
+per command, so still try each helper script on its own before concluding it can't
+run. If a script can't run, say so in the end-of-run summary and
 `STATUS.md`; **never invent a timestamp** or hand-create a run dir in its place. Use
 `scripts/probe_subagents.py --repo <target>` to check which specialist sub-agents are
 installed. Use `scripts/read_profile.py` to read the user's preference profile (see
