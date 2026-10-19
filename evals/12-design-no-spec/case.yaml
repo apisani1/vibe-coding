@@ -1,0 +1,27 @@
+schema_version: "1.1"
+name: 12-design-no-spec
+description: >
+  Design requested with no upstream spec: the skill must offer to run define first
+  (or ask the questions define needs) instead of fabricating a spec or a design.
+execution:
+  max_turns: 20
+  timeout_seconds: 300
+  allowed_tools: [Skill, Read, Glob, Grep, Write, "Bash(python3:*)", "Bash(ls:*)", "Bash(mkdir:*)"]
+  prompt: >
+    /vibe design — a URL shortener service. The target is the current (empty) directory.
+runs: 3
+graders:
+  - name: no-design-or-code
+    type: regex
+    target: files
+    match: count:0
+    flags: m
+    pattern: '(^|/)design\.md$|(^|/)decisions\.md$|^(?!\.claude/|vibe/).*\.(py|toml|js|ts|go|cfg|ini)$'
+  - name: offers-define-first
+    type: llm
+    focus: last_message
+    criteria: |
+      Score PASS only if ALL of the following hold for the final message:
+      1. It says there is no spec yet (or that design needs a spec / requirements first).
+      2. It offers to run define / write the spec first, OR asks the clarifying questions a spec would need (users, scale, custom aliases, expiry, analytics, etc.) — and then stops.
+      3. It does NOT present a technical design (architecture, data model, endpoints) as if the requirements were settled. A clearly labelled sketch of options is fine.

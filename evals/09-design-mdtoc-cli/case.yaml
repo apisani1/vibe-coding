@@ -1,0 +1,60 @@
+schema_version: "1.1"
+name: 09-design-mdtoc-cli
+description: >
+  Greenfield CLI with an approved spec: design writes design.md + decisions.md that
+  cover every acceptance criterion, stay simple, write no code, and name plan next.
+context:
+  # Seeds vibe/spec.md. Needs `--scaffold` on the eval command line.
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  # No Agent tool: exercises the inline self-review fallback, not vibe-architect.
+  allowed_tools: [Skill, Read, Glob, Grep, Write, "Bash(python3:*)", "Bash(ls:*)", "Bash(mkdir:*)"]
+  prompt: >
+    The spec for mdtoc is approved (vibe/spec.md). Now design it — the technical design
+    only, no implementation yet. The target is the current directory.
+runs: 3
+graders:
+  - name: design-location
+    type: file_exists
+    path: vibe/design.md
+    weight: 0.5
+  - name: decisions-location
+    type: file_exists
+    path: vibe/decisions.md
+    weight: 0.5
+  - name: no-source-code
+    type: regex
+    target: files
+    match: count:0
+    flags: m
+    pattern: '^(?!\.claude/|vibe/).*\.(py|toml|js|ts|cfg|ini)$'
+  - name: design-quality
+    type: llm
+    focus: {source: file, path: vibe/design.md}
+    criteria: |
+      This is a technical design for mdtoc, a stdlib-only Python CLI that injects a linked TOC between `<!-- toc -->` markers. Its spec has these acceptance criteria:
+      AC1 idempotent re-run; AC2 `--check` exits 1 stale / 0 current without modifying the file; AC3 `--max-depth`; AC4 GitHub-style `-1`/`-2` suffixes for duplicate headings; AC5 headings inside fenced code blocks ignored; AC6 no markers → exit 2 + stderr message, file unchanged.
+      Score PASS only if ALL of the following hold:
+      1. It explains how the system works (an overview) and names its modules/functions with their responsibilities.
+      2. Every one of AC1–AC6 is handled by a named component or algorithm (fenced-code tracking, slug/duplicate counter, stale comparison, exit codes). Missing any one is a FAIL.
+      3. It lists edge cases with intended behavior (e.g. missing/duplicated markers, empty file, line endings).
+      4. Any third-party dependency is justified; a runtime dependency contradicts the stdlib-only constraint and is a FAIL.
+      5. It is proportionate: no plugin systems, class hierarchies, config files, or layers the spec does not need.
+      6. It contains no full implementation code (short signatures or pseudo-code are fine).
+  - name: decisions-quality
+    type: llm
+    focus: {source: file, path: vibe/decisions.md}
+    weight: 0.5
+    criteria: |
+      Score PASS only if the file records at least two significant design decisions that each state (a) what was chosen, (b) at least one alternative considered with why it was rejected, and (c) a consequence (what it makes easier or harder). Judge each decision's own entry; a status note such as "pending confirmation" does not make an entry incomplete.
+  - name: names-next-mode
+    type: llm
+    focus: last_message
+    weight: 0.5
+    criteria: |
+      Score PASS only if ALL of the following hold for the final message:
+      1. It states where the design was written (a file path).
+      2. It names plan / planning the implementation as the next step, before any coding.
+      3. It does NOT claim that any code was implemented or scaffolded.

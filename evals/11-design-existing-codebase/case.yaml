@@ -1,0 +1,50 @@
+schema_version: "1.1"
+name: 11-design-existing-codebase
+description: >
+  Feature design inside an existing package: the design must reuse the codebase's
+  idiom (argparse subcommands, plain functions, stdlib only, existing low_stock filter)
+  instead of introducing a competing structure, and must not touch code.
+context:
+  # Seeds the invtrack package + vibe/spec.md. Needs `--scaffold` on the eval command line.
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  # No Agent tool: exercises the inline self-review fallback, not vibe-architect.
+  allowed_tools: [Skill, Read, Glob, Grep, Write, "Bash(python3:*)", "Bash(ls:*)", "Bash(mkdir:*)"]
+  prompt: >
+    We approved the spec for CSV export in vibe/spec.md. Design how it fits into this
+    codebase — design only, don't change any code yet.
+runs: 3
+graders:
+  - name: design-location
+    type: file_exists
+    path: vibe/design.md
+    weight: 0.5
+  - name: no-code-written
+    # Seeded .py/.toml files exist, so check the trace for writes to them instead.
+    type: regex
+    target: trace
+    match: count:0
+    pattern: '"name":"(Write|Edit)","input":\{"file_path":"[^"]*\.(py|toml)"'
+  - name: fits-codebase
+    type: llm
+    focus: {source: file, path: vibe/design.md}
+    criteria: |
+      This is a feature design for adding `invtrack export --csv PATH [--low N]` to an existing package. The codebase: `invtrack/cli.py` (argparse, one `cmd_<name>(args) -> int` function per subcommand registered with `set_defaults(func=...)`), `invtrack/store.py` (`load_items()` returns `list[dict]`), `invtrack/report.py` (pure functions incl. `low_stock(items, threshold)`), `pyproject.toml` with `dependencies = []`.
+      Score PASS only if ALL of the following hold:
+      1. The new subcommand is added the existing way: an argparse subparser in `cli.py` with a `cmd_export` (or equivalently named) function — not click/typer, not a new CLI framework or command-class pattern.
+      2. It reuses `store.load_items()` and `report.low_stock()` for `--low` rather than re-implementing loading or filtering.
+      3. CSV writing uses the standard-library `csv` module (no pandas or other dependency), placed as a plain function in an existing or one new small module.
+      4. It covers the spec's acceptance criteria: header + store order, `--low` parity with `list --low`, quoting of commas/quotes, header-only empty export, unwritable path → exit 1 with the stderr message, existing behavior unchanged.
+      5. It names the existing files it changes and any new files, and adds tests in `tests/` in the existing pytest style.
+      6. It is proportionate: no base classes, exporter registries, format plugins, or configuration the spec does not ask for.
+  - name: names-next-mode
+    type: llm
+    focus: last_message
+    weight: 0.5
+    criteria: |
+      Score PASS only if ALL of the following hold for the final message:
+      1. It states where the design was written (a file path).
+      2. It names plan / planning the implementation as the next step, before any coding.
+      3. It does NOT claim that any code was changed or implemented.
