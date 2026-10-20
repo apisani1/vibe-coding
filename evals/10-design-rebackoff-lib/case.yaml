@@ -31,19 +31,31 @@ graders:
     match: count:0
     flags: m
     pattern: '^(?!\.claude/|vibe/).*\.(py|toml|js|ts|cfg|ini)$'
-  - name: design-quality
+  - name: api-and-injection
     type: llm
     focus: {source: file, path: vibe/design.md}
     criteria: |
-      This is a technical design for rebackoff, a zero-dependency Python retry library with a `retry` decorator, a `retrying` context manager, `expo` backoff with full jitter, `retry_on` (tuple or predicate), and an overall `deadline`. Spec acceptance criteria: AC1 exact attempt count + last exception re-raised; AC2 non-matching exception raised after 1 call; AC3 jitter bounds `[0, min(cap, base*2**n)]` with injected clock/sleep and seeded RNG; AC4 deadline → `RetryError` carrying the last exception; AC5 context manager honors the same rules; AC6 tests never sleep in real time.
+      This is a technical design for rebackoff, a zero-dependency Python retry library with a `retry` decorator, a `retrying` context manager, `expo` backoff with full jitter, `retry_on` (tuple or predicate), and an overall `deadline`. Spec acceptance criteria: AC1 exact attempt count + last exception re-raised; AC2 non-matching exception raised after 1 call; AC3 jitter bounds `[0, min(cap, base*2**n)]` with injected clock/sleep and seeded RNG; AC4 deadline -> `RetryError` carrying the last exception; AC5 context manager honors the same rules; AC6 tests never sleep in real time.
       Score PASS only if ALL of the following hold:
       1. It pins down the public API: the parameters each of `retry`, `retrying` and `expo` accepts (a shorthand such as `retry(**same keywords as retrying)` is fine), what `RetryError` carries, and what the package exports.
       2. Clock, sleep, and randomness are injectable (parameters or a seam), explicitly so tests satisfy AC3, AC4 and AC6.
       3. The decorator and the context manager share one retry engine rather than duplicating the policy logic (AC5).
-      4. Every one of AC1–AC6 is handled by a named component or rule. Missing any one is a FAIL.
-      5. Edge cases are listed with behavior (e.g. max_attempts=1, deadline shorter than first backoff, predicate that raises, generator/async functions passed to the decorator).
-      6. It is proportionate: no runtime dependencies, no strategy-class hierarchies, registries, or hooks the spec puts Out of scope.
-      7. It contains no full implementation code (signatures or short pseudo-code are fine).
+  - name: ac-coverage
+    type: llm
+    focus: {source: file, path: vibe/design.md}
+    criteria: |
+      This is a technical design for rebackoff, a zero-dependency Python retry library with a `retry` decorator, a `retrying` context manager, `expo` backoff with full jitter, `retry_on` (tuple or predicate), and an overall `deadline`. Spec acceptance criteria: AC1 exact attempt count + last exception re-raised; AC2 non-matching exception raised after 1 call; AC3 jitter bounds `[0, min(cap, base*2**n)]` with injected clock/sleep and seeded RNG; AC4 deadline -> `RetryError` carrying the last exception; AC5 context manager honors the same rules; AC6 tests never sleep in real time.
+      Score PASS only if ALL of the following hold:
+      1. Every one of AC1-AC6 is handled by a named component or rule. Missing any one is a FAIL.
+      2. Edge cases are listed with intended behavior (e.g. max_attempts=1, deadline shorter than first backoff, predicate that raises, generator/async functions passed to the decorator). Not every example is required; at least four distinct edge cases must be covered.
+  - name: proportionate
+    type: llm
+    focus: {source: file, path: vibe/design.md}
+    criteria: |
+      This is a technical design for rebackoff, a zero-dependency Python retry library with a `retry` decorator, a `retrying` context manager, `expo` backoff with full jitter, `retry_on` (tuple or predicate), and an overall `deadline`. Spec acceptance criteria: AC1 exact attempt count + last exception re-raised; AC2 non-matching exception raised after 1 call; AC3 jitter bounds `[0, min(cap, base*2**n)]` with injected clock/sleep and seeded RNG; AC4 deadline -> `RetryError` carrying the last exception; AC5 context manager honors the same rules; AC6 tests never sleep in real time.
+      Score PASS only if ALL of the following hold:
+      1. No runtime dependencies, strategy-class hierarchies, registries, or hooks that the spec puts Out of scope (async, logging/metrics hooks, per-attempt timeouts).
+      2. It contains no full implementation code (signatures, flowcharts, or short pseudo-code are fine).
   - name: decisions-quality
     type: llm
     focus: {source: file, path: vibe/decisions.md}
