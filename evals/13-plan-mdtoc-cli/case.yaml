@@ -74,16 +74,21 @@ graders:
       This is a verification plan for a Python CLI (mdtoc) with acceptance criteria AC1 idempotent re-run; AC2 `--check` exit codes; AC3 `--max-depth`; AC4 duplicate-heading anchor suffixes; AC5 headings in fenced code ignored; AC6 missing markers -> exit 2 + stderr, file unchanged.
       Score PASS only if ALL of the following hold:
       1. Each of AC1-AC6 maps to a concrete, runnable check (a pytest test or a command with an expected exit code/output), not "review" or "manually confirm".
-  - name: verification-proportionate
+  - name: verification-no-extra-tooling
+    type: regex
+    target: {source: file, path: vibe/verification-plan.md}
+    match: not_contains
+    flags: i
+    pattern: '\b(ruff|mypy|flake8|pylint|tox|nox|codecov|coveralls|pre-commit)\b'
+    weight: 0.17
+  - name: verification-cannot-verify
     type: llm
     focus: {source: file, path: vibe/verification-plan.md}
-    weight: 0.5
+    weight: 0.17
     criteria: |
-      This is a verification plan for a Python CLI (mdtoc) with acceptance criteria AC1 idempotent re-run; AC2 `--check` exit codes; AC3 `--max-depth`; AC4 duplicate-heading anchor suffixes; AC5 headings in fenced code ignored; AC6 missing markers -> exit 2 + stderr, file unchanged.
-      Score PASS only if ALL of the following hold:
-      1. It uses the project's own tooling (pytest via uv) and does not invent heavy extra tooling the spec did not ask for.
-      2. It states what cannot be verified locally, or says nothing applies with a reason.
-      3. It stays proportionate: a smallest-sufficient set of checks, not a demand for 100% coverage.
+      This is a verification plan for a Python CLI (mdtoc) with acceptance criteria AC1 idempotent re-run; AC2 `--check` exit codes; AC3 `--max-depth`; AC4 duplicate-heading anchor suffixes; AC5 headings in fenced code ignored; AC6 missing markers -> exit 2 + stderr, file unchanged. Spec constraints: Python 3.11+, stdlib only at runtime, UV, pytest.
+      Score PASS only if the following holds:
+      1. It states what cannot be verified locally, or says nothing applies with a reason.
   - name: names-next-mode
     type: llm
     focus: last_message
