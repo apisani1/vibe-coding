@@ -1,0 +1,95 @@
+schema_version: "1.1"
+name: 13-plan-mdtoc-cli
+description: >
+  Greenfield CLI with approved spec + design: plan writes plan.md, checklist.md and
+  verification-plan.md with risks first, small verifiable checkpoints, every acceptance
+  criterion covered, an unticked checklist, no code, and build named next with approval.
+context:
+  # Seeds vibe/spec.md + vibe/design.md. Needs `--scaffold` on the eval command line.
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  # No Agent tool: exercises the inline fallback, not vibe-test-designer.
+  allowed_tools: [Skill, Read, Glob, Grep, Write, "Bash(python3:*)", "Bash(ls:*)", "Bash(mkdir:*)"]
+  prompt: >
+    The spec and design for mdtoc are approved (vibe/spec.md, vibe/design.md). Plan the
+    implementation — the plan, checklist and verification plan only, no code yet. The
+    target is the current directory.
+runs: 3
+graders:
+  - name: plan-location
+    type: file_exists
+    path: vibe/plan.md
+    weight: 0.5
+  - name: checklist-location
+    type: file_exists
+    path: vibe/checklist.md
+    weight: 0.5
+  - name: verification-plan-location
+    type: file_exists
+    path: vibe/verification-plan.md
+    weight: 0.5
+  - name: no-source-code
+    type: regex
+    target: files
+    match: count:0
+    flags: m
+    pattern: '^(?!\.claude/|vibe/).*\.(py|toml|js|ts|cfg|ini)$'
+  - name: checklist-unticked
+    type: regex
+    target: {source: file, path: vibe/checklist.md}
+    match: not_contains
+    pattern: '\[[xX]\]'
+    weight: 0.5
+  - name: plan-risks-and-checkpoints
+    type: llm
+    focus: {source: file, path: vibe/plan.md}
+    criteria: |
+      This is an implementation plan for mdtoc, a stdlib-only Python CLI that injects a linked TOC between `<!-- toc -->` markers. Its spec has acceptance criteria AC1 idempotent re-run; AC2 `--check` exit 1 stale / 0 current without writing; AC3 `--max-depth`; AC4 `-1`/`-2` suffixes for duplicate headings; AC5 headings in fenced code ignored; AC6 no markers -> exit 2 + stderr, file unchanged.
+      Score PASS only if ALL of the following hold:
+      1. It lists risk factors BEFORE the checkpoints, each with a mitigation or alternative route.
+      2. It has at least three checkpoints; every checkpoint states what it delivers, what files/modules it touches, and a verify check.
+      3. Checkpoints are small and independently verifiable, and the riskiest logic (fence tracking, duplicate-slug counting) is not left to the last checkpoint.
+  - name: plan-ac-coverage
+    type: llm
+    focus: {source: file, path: vibe/plan.md}
+    criteria: |
+      This is an implementation plan for mdtoc, a stdlib-only Python CLI that injects a linked TOC between `<!-- toc -->` markers. Its spec has acceptance criteria AC1 idempotent re-run; AC2 `--check` exit 1 stale / 0 current without writing; AC3 `--max-depth`; AC4 `-1`/`-2` suffixes for duplicate headings; AC5 headings in fenced code ignored; AC6 no markers -> exit 2 + stderr, file unchanged.
+      Score PASS only if ALL of the following hold:
+      1. Every one of AC1-AC6 is covered by the verify check of at least one checkpoint. Missing any one is a FAIL.
+  - name: plan-done-and-proportion
+    type: llm
+    focus: {source: file, path: vibe/plan.md}
+    weight: 0.5
+    criteria: |
+      This is an implementation plan for mdtoc, a stdlib-only Python CLI that injects a linked TOC between `<!-- toc -->` markers. Its spec has acceptance criteria AC1 idempotent re-run; AC2 `--check` exit 1 stale / 0 current without writing; AC3 `--max-depth`; AC4 `-1`/`-2` suffixes for duplicate headings; AC5 headings in fenced code ignored; AC6 no markers -> exit 2 + stderr, file unchanged.
+      Score PASS only if ALL of the following hold:
+      1. It has a Definition of Done separating required from optional-later work.
+      2. It contains no full implementation code (file names, signatures, and commands are fine).
+  - name: verification-maps-acs
+    type: llm
+    focus: {source: file, path: vibe/verification-plan.md}
+    criteria: |
+      This is a verification plan for a Python CLI (mdtoc) with acceptance criteria AC1 idempotent re-run; AC2 `--check` exit codes; AC3 `--max-depth`; AC4 duplicate-heading anchor suffixes; AC5 headings in fenced code ignored; AC6 missing markers -> exit 2 + stderr, file unchanged.
+      Score PASS only if ALL of the following hold:
+      1. Each of AC1-AC6 maps to a concrete, runnable check (a pytest test or a command with an expected exit code/output), not "review" or "manually confirm".
+  - name: verification-proportionate
+    type: llm
+    focus: {source: file, path: vibe/verification-plan.md}
+    weight: 0.5
+    criteria: |
+      This is a verification plan for a Python CLI (mdtoc) with acceptance criteria AC1 idempotent re-run; AC2 `--check` exit codes; AC3 `--max-depth`; AC4 duplicate-heading anchor suffixes; AC5 headings in fenced code ignored; AC6 missing markers -> exit 2 + stderr, file unchanged.
+      Score PASS only if ALL of the following hold:
+      1. It uses the project's own tooling (pytest via uv) and does not invent heavy extra tooling the spec did not ask for.
+      2. It states what cannot be verified locally, or says nothing applies with a reason.
+      3. It stays proportionate: a smallest-sufficient set of checks, not a demand for 100% coverage.
+  - name: names-next-mode
+    type: llm
+    focus: last_message
+    weight: 0.5
+    criteria: |
+      Score PASS only if ALL of the following hold for the final message:
+      1. It states where the plan was written (a file path).
+      2. It names build (implementing) as the next step AND says it needs the user's explicit approval before changing the repo.
+      3. It does NOT claim that any code was implemented or scaffolded.

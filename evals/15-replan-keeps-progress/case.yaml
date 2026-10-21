@@ -1,0 +1,70 @@
+schema_version: "1.1"
+name: 15-replan-keeps-progress
+description: >
+  Re-plan mid-build after a design change: finished checkpoints stay ticked and
+  unchanged, the build object in vibe/state.json survives, the old checklist is
+  snapshotted into the run's prior/, and the new work (--dry-run) is planned.
+context:
+  # Seeds spec, design (updated), plan, checklist (1-2 ticked), state.json with a build object.
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  allowed_tools: [Skill, Read, Glob, Grep, Write, "Bash(python3:*)", "Bash(ls:*)", "Bash(mkdir:*)"]
+  prompt: >
+    The design was updated after the plan was written: vibe/design.md now includes a
+    --dry-run flag. Re-plan to cover it. Checkpoints 1 and 2 are already built; keep them
+    as done. I confirm that the unticked checkpoint 3 can be replaced by the new plan.
+    Plan only, no code.
+runs: 3
+graders:
+  - name: checkpoint-1-still-done
+    type: regex
+    target: {source: file, path: vibe/checklist.md}
+    match: contains
+    pattern: '- \[[xX]\] 1\.'
+  - name: checkpoint-2-still-done
+    type: regex
+    target: {source: file, path: vibe/checklist.md}
+    match: contains
+    pattern: '- \[[xX]\] 2\.'
+  - name: dry-run-planned
+    type: regex
+    target: {source: file, path: vibe/checklist.md}
+    match: contains
+    flags: i
+    pattern: 'dry[- ]run'
+  - name: new-work-unticked
+    type: regex
+    target: {source: file, path: vibe/checklist.md}
+    match: contains
+    pattern: '- \[ \] '
+    weight: 0.5
+  - name: build-state-kept
+    type: regex
+    target: {source: file, path: vibe/state.json}
+    match: contains
+    pattern: '"completed_checkpoints":\s*\[\s*"1",\s*"2"\s*\]'
+  - name: old-checklist-snapshotted
+    type: regex
+    target: files
+    match: contains
+    flags: m
+    pattern: '^vibe/runs/[^/]+/prior/checklist\.md$'
+    weight: 0.5
+  - name: no-source-code
+    type: regex
+    target: files
+    match: count:0
+    flags: m
+    pattern: '^(?!\.claude/|vibe/).*\.(py|toml|js|ts|cfg|ini)$'
+  - name: reports-carry-forward
+    type: llm
+    focus: last_message
+    weight: 0.5
+    criteria: |
+      Score PASS only if ALL of the following hold for the final message:
+      1. It says checkpoints 1 and 2 were carried forward as already done (not redone or re-planned).
+      2. It says the --dry-run work was added to the plan.
+      3. It names build as the next step and says it needs the user's explicit approval.
+      4. It does NOT claim that any code was implemented.

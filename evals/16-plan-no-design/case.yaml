@@ -1,0 +1,31 @@
+schema_version: "1.1"
+name: 16-plan-no-design
+description: >
+  Plan requested with a spec but no design: the skill must offer to run design first
+  instead of fabricating a design or planning against missing architecture.
+context:
+  # Seeds vibe/spec.md only. Needs `--scaffold` on the eval command line.
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 20
+  timeout_seconds: 300
+  allowed_tools: [Skill, Read, Glob, Grep, Write, "Bash(python3:*)", "Bash(ls:*)", "Bash(mkdir:*)"]
+  prompt: >
+    /vibe plan — the mdtoc spec is approved in vibe/spec.md. Plan the implementation.
+    The target is the current directory.
+runs: 3
+graders:
+  - name: no-plan-or-code
+    type: regex
+    target: files
+    match: count:0
+    flags: m
+    pattern: '^vibe/(plan|checklist|verification-plan|design)\.md$|^(?!\.claude/|vibe/).*\.(py|toml|js|ts|cfg|ini)$'
+  - name: offers-design-first
+    type: llm
+    focus: last_message
+    criteria: |
+      Score PASS only if ALL of the following hold for the final message:
+      1. It says there is no design yet (or that planning needs vibe/design.md first).
+      2. It offers to run design first (or asks to confirm that), and then stops.
+      3. It does NOT present a full implementation plan with checkpoints as if the architecture were settled. A clearly labelled rough sketch is fine.

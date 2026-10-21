@@ -1,0 +1,61 @@
+schema_version: "1.1"
+name: 14-plan-existing-codebase
+description: >
+  Feature plan inside an existing package: checkpoints must touch the real files, add
+  tests in the existing pytest style, verify with the project's existing pytest setup
+  (not invented tooling), keep the existing tests in the loop, and change no code.
+context:
+  # Seeds the invtrack package + vibe/spec.md + vibe/design.md. Needs `--scaffold`.
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 600
+  allowed_tools: [Skill, Read, Glob, Grep, Write, "Bash(python3:*)", "Bash(ls:*)", "Bash(mkdir:*)"]
+  prompt: >
+    The spec and design for CSV export are approved (vibe/spec.md, vibe/design.md). Plan
+    the implementation in this codebase — plan only, don't change any code yet.
+runs: 3
+graders:
+  - name: plan-location
+    type: file_exists
+    path: vibe/plan.md
+    weight: 0.5
+  - name: verification-plan-location
+    type: file_exists
+    path: vibe/verification-plan.md
+    weight: 0.5
+  - name: no-code-written
+    # Seeded .py/.toml files exist, so check the trace for writes to them instead.
+    type: regex
+    target: trace
+    match: count:0
+    pattern: '"name":"(Write|Edit)","input":\{"file_path":"[^"]*\.(py|toml)"'
+  - name: plan-fits-codebase
+    type: llm
+    focus: {source: file, path: vibe/plan.md}
+    criteria: |
+      This is an implementation plan for adding `invtrack export --csv PATH [--low N]` to an existing package: `invtrack/cli.py` (argparse, `cmd_<name>` functions), `invtrack/report.py` (pure functions incl. `low_stock`), `invtrack/store.py`, tests in `tests/` (pytest, e.g. `tests/test_report.py`), `pyproject.toml` with `dependencies = []`.
+      Score PASS only if ALL of the following hold:
+      1. It lists risk factors before the checkpoints, each with a mitigation (a low-risk change may have mild risks, but the section must exist and be specific).
+      2. Every checkpoint states what it delivers, the existing/new files it touches (`invtrack/report.py`, `invtrack/cli.py`, `tests/...`), and a verify check.
+      3. Checkpoints are small and ordered so each can be verified alone (e.g. pure `format_csv` + test first, CLI wiring after).
+      4. All six acceptance criteria are covered by some checkpoint's verify check: header + order, `--low` parity, quoting, empty store, unwritable path exit 1, existing behavior unchanged.
+      5. It does not introduce dependencies, a new CLI framework, or new tooling the codebase lacks.
+  - name: verification-uses-existing-checks
+    type: llm
+    focus: {source: file, path: vibe/verification-plan.md}
+    criteria: |
+      Score PASS only if ALL of the following hold:
+      1. It builds on the project's existing pytest suite (`tests/`), including re-running `tests/test_report.py` / the whole suite to prove existing behavior is unchanged.
+      2. Each acceptance criterion (header + order, `--low` parity, comma/quote round-trip, empty store, unwritable path exit 1 with stderr message, no regression) maps to a runnable check, not "review".
+      3. It does not add linters, type checkers, CI config, or other tooling the project does not already have.
+      4. It states what cannot be verified locally, or says nothing applies.
+  - name: names-next-mode
+    type: llm
+    focus: last_message
+    weight: 0.5
+    criteria: |
+      Score PASS only if ALL of the following hold for the final message:
+      1. It states where the plan was written (a file path).
+      2. It names build (implementing) as the next step AND says it needs the user's explicit approval before changing the repo.
+      3. It does NOT claim that any code was changed or implemented.
